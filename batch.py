@@ -140,6 +140,55 @@ class Batch:
             losses.append(mean_loss)
         if do_print: print("end of training data :")
         return np.array(losses).mean()
+    def train_policy_td(self, policy):
+        """
+        Trains a policy through a CEM from a batch of data
+        :param policy: the trained policy
+        :return: the average loss over the batch
+        """
+        do_print = False
+        losses = []
+        if do_print: print("training data :")
+        for j in range(self.size):
+            episode = self.episodes[j]
+            state = np.array(episode.state_pool)
+            action = np.array(episode.action_pool)
+            reward = np.array(episode.reward_pool)
+            if do_print: print("state", state)
+            if do_print: print("action", action)
+            if do_print: print("reward", reward)
+            policy_loss = policy.train_pg(state, action, reward)
+            if do_print: print("loss", policy_loss)
+            policy_loss = policy_loss.data.numpy()
+            mean_loss = policy_loss.mean()
+            losses.append(mean_loss)
+        if do_print: print("end of training data :")
+        return np.array(losses).mean()
+
+    def train_policy_cem(self,policy):
+        """
+        Trains a policy through a CEM from a batch of data
+        :param policy: the trained policy
+        :return: the average loss over the batch
+        """
+        do_print = False
+        losses = []
+        if do_print: print("training data :")
+        for j in range(self.size):
+            episode = self.episodes[j]
+            state = np.array(episode.state_pool)
+            action = np.array(episode.action_pool)
+            reward = np.array(episode.reward_pool)
+            if do_print: print("state", state)
+            if do_print: print("action", action)
+            if do_print: print("reward", reward)
+            policy_loss = policy.train_cem(state, action, reward)
+            if do_print: print("loss", policy_loss)
+            policy_loss = policy_loss.data.numpy()
+            mean_loss = policy_loss.mean()
+            losses.append(mean_loss)
+        if do_print: print("end of training data :")
+        return np.array(losses).mean()
 
     def train_policy_through_regress(self, policy):
         """
@@ -164,7 +213,7 @@ class Batch:
         Trains a critic through a temporal difference method
         :param gamma: the discount factor
         :param critic: the trained critic
-        :param policy: 
+        :param policy:
         :param train: True to train, False to compute a validation loss
         :return: the average critic loss
         """
@@ -222,7 +271,7 @@ class Batch:
         Computes the dataset of samples to allow for immediate update of the critic.
         The dataset contains the list of states, of actions, and the target value V(s) or Q(s,a)
         The computation of the target value depends on the critic update method.
-        
+
         :param gamma: the discount factor
         :return: the dataset corresponding to the content of the replay buffer
         """
@@ -239,7 +288,7 @@ class Batch:
             action = episode.action_pool
             #### MODIF:  transform actions in array, without it the dataset conversion in TensorDataset will crash on MountainCar and CartPole
             action_cp = []
-            for i in range(len(action)) : 
+            for i in range(len(action)) :
                 action_cp.append([int(action[i])])
             action = action_cp
             ####
@@ -281,7 +330,7 @@ class Batch:
             action = episode.action_pool
             #### MODIF:  transform actions in array, without it the dataset conversion in TensorDataset will crash on MountainCar and CartPole
             action_cp = []
-            for i in range(len(action)) : 
+            for i in range(len(action)) :
                 action_cp.append([int(action[i])])
             action = action_cp
             ####
@@ -300,5 +349,3 @@ class Batch:
 
         dataset = data.TensorDataset(torch.Tensor(list_states), torch.Tensor(list_actions), t_target)
         return dataset
-
-

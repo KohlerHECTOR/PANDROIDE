@@ -93,6 +93,31 @@ class Simu:
             if done:
                 # print("############ eval nb steps:", t)
                 return total_reward
+    def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
+        """
+         Perform an episode using the policy parameter and return the obtained reward
+         Used to evaluate an already trained policy, without storing data for further training
+         :param policy: the policy controlling the agent
+         :param deterministic: whether the evaluation should use a deterministic policy or not
+         :param render: whether the episode is displayed or not (True or False)
+         :return: the total reward collected during the episode
+         """
+        policy.set_weights(weights)
+        self.env.set_reward_flag(True)
+        self.env.set_duration_flag(True)
+        state = self.reset(render)
+        total_reward = 0
+        for t in count():
+            action = policy.select_action(state, deterministic)
+            # print("action", action)
+            next_state, reward, done, _ = self.env.step(action)
+            total_reward += reward
+            state = next_state
+
+            if done:
+                # print("############ eval nb steps:", t)
+                return total_reward
+
 
     def train_on_one_episode(self, policy, deterministic, render):
         """
@@ -111,7 +136,7 @@ class Simu:
 
             if done:
                 # print("train nb steps:", t)
-                return episode
+                return episodeevaluate_episode
 
     def train(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0) -> None:
         """
@@ -152,6 +177,20 @@ class Simu:
             # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
+            if self.best_reward < total_reward:
+                self.best_reward = total_reward
+                pw.save(self.best_reward)
+    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
+        for cycle in range(params.nb_cycles):
+            batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+
+            # Update the policy
+            batch2 = batch.copy_batch()
+            policy_loss = batch.train_policy_cem(policy)
+            policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
+
+            # policy evaluation part
+            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 pw.save(self.best_reward)
