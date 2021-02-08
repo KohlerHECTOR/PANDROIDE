@@ -2,12 +2,12 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
 from visu.visu_policies import plot_policy
-from visu.visu_results import plot_results
+from visu.visu_results import plot_results_cem
 import gym
 
 
@@ -52,17 +52,17 @@ def study_cem(params) -> None:
     # cuda = torch.device('cuda')
     study = "CEM"
     simu = make_simu_from_params(params)
-    simu.env.set_file_name(study[i] + '_' + simu.env_name)
-    policy_loss_file, critic_loss_file = set_files(study[i], simu.env_name)
-    print("study : ", study[i])
+    simu.env.set_file_name(study + '_' + simu.env_name)
+    policy_loss_file, critic_loss_file = set_files(study, simu.env_name)
+    print("study : ", study)
     for j in range(params.nb_repet):
         simu.env.reinit()
         if params.policy_type == "bernoulliCEM":
-            policy = BernoulliCEM(simu.obs_size, 24, 36, 1, params.lr_actor)
+            policy = BernoulliCEM(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-        plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
-        simu.trainCEM(pw, params, policy, critic, policy_loss_file, critic_loss_file, study[i])
-        plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
+        plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
+        simu.trainCEM(pw, params, policy, policy_loss_file, study)
+        plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
     chrono.stop()
 
 if __name__ == '__main__':
@@ -70,4 +70,4 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
-    plot_results(args)
+    plot_results_cem(args)

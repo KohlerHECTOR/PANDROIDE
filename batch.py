@@ -165,16 +165,18 @@ class Batch:
         if do_print: print("end of training data :")
         return np.array(losses).mean()
 
-    def train_policy_cem(self,policy):
+    def train_policy_cem(self,policy,weights):
         """
         Trains a policy through a CEM from a batch of data
         :param policy: the trained policy
         :return: the average loss over the batch
         """
+        policy.set_weights(weights)
         do_print = False
         losses = []
         if do_print: print("training data :")
         for j in range(self.size):
+            #print("ok")
             episode = self.episodes[j]
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
