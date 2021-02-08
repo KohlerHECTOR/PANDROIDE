@@ -18,7 +18,7 @@ def plot_data(filename, label):
     Retrieving the variance information is based on pandas
     :param filename: the file containing the data
     :param label: the label to be shown in the plot (a string)
-    :return: a curve with some variance and a label, embedded in plt. 
+    :return: a curve with some variance and a label, embedded in plt.
     """
     data = pd.read_csv(filename, sep=' ')
     data = pd.read_csv(filename, sep=' ', names=list(range(data.shape[1])))
@@ -64,6 +64,11 @@ def exploit_reward_full(params) -> None:
     for i in range(len(study)):
         plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "reward " + study[i])
 
+def exploit_reward_full_cem(params) -> None:
+    path = os.getcwd() + "/data/save"
+    plot_data(path + "/reward_" + '_' + params.env_name + '.txt', "reward " )
+
+
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
@@ -99,7 +104,16 @@ def exploit_policy_loss_full(params) -> None:
     plt.savefig(path + '/../results/policy_loss_' + make_full_string(params) + 'pg.pdf')
     plt.show()
 
+def exploit_policy_loss_full_cem(params) -> None:
+    path = os.getcwd() + "/data/save"
+    plot_data(path + "/policy_loss_" + '_' + params.env_name + '.txt', "policy loss " )
 
+    plt.xlabel("Cycles")
+    plt.ylabel("Loss")
+    plt.legend(loc="lower right")
+    plt.title(params.env_name)
+    plt.savefig(path + '/../results/policy_loss_' + make_full_string(params) + 'cem.pdf')
+    plt.show()
 def exploit_nstep(params) -> None:
     path = os.getcwd() + "/data/save"
     steps = [1, 5, 10, 15, 20]
@@ -203,6 +217,15 @@ def plot_results(params) -> None:
         exploit_critic_loss_full(params)
     elif params.study_name == "nstep":
         exploit_nstep(params)
+
+def plot_results_cem(params) -> None:
+    """
+    Plot the results from a study previously saved in files in "./data/save"
+    :param params: parameters of the study
+    :return: nothing
+    """
+    exploit_reward_full_cem(params)
+    exploit_policy_loss_full_cem(params)
 
 
 if __name__ == '__main__':
