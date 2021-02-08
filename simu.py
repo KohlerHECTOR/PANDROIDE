@@ -91,7 +91,8 @@ class Simu:
             state = next_state
 
             if done:
-                print(t)
+                if t == 199:
+                    print("ok")
                 return total_reward
     def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
         """
@@ -107,7 +108,7 @@ class Simu:
         self.env.set_duration_flag(True)
         state = self.reset(render)
         total_reward = 0
-        max_t_step=0
+        final_t=0
         for t in count():
             action = policy.select_action(state, deterministic)
             # print("action", action)
@@ -116,15 +117,18 @@ class Simu:
             state = next_state
 
             if done:
-                print(t)
-                return total_reward
+                final_t=t
+                #if t == 199:
+                    #print("ok")
+
+                return total_reward,final_t
     def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
         pop_size=200
-        elite_frac=0.2
-        sigma=0.1
+        elite_frac=0.1
+        sigma=0.5
         n_elite=int(pop_size*elite_frac)
         best_weight = sigma*np.random.randn(policy.get_weights_dim())
-
+        max_t=0
         for cycle in range(params.nb_cycles):
             weights_pop = [best_weight + (sigma*np.random.randn(policy.get_weights_dim())) for i in range(pop_size)]
 
@@ -135,7 +139,7 @@ class Simu:
             rewards=np.zeros(pop_size)
             for i in range(pop_size):
                 #policy_loss[i] = batch.train_policy_cem(policy,weights_pop[i])
-                rewards[i]=self.evaluate_episode_CEM(policy, params.deterministic_eval, weights_pop[i])
+                rewards[i]=self.evaluate_episode_CEM(policy, params.deterministic_eval, weights_pop[i])[0]
             elite_idxs = rewards.argsort()[-n_elite:]
             #elite_idxs = policy_loss.argsort()[:n_elite]
             elite_weights = [weights_pop[i] for i in elite_idxs]
@@ -150,7 +154,10 @@ class Simu:
             #print(policy_loss_best)
             #min
             # policy evaluation part
-            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight)
+            total_reward,t = self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight)
+            if t>max_t:
+                max_t=t
+            print(max_t)
             #print(self.best_reward)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
@@ -215,7 +222,7 @@ class Simu:
             # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
-            print(self.best_reward)
+            #print(#self.best_reward)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 pw.save(self.best_reward)
