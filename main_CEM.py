@@ -72,4 +72,8 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
+<<<<<<< HEAD
     # plot_results_cem(args)
+=======
+    #plot_results_cem(args)
+>>>>>>> e912fbb906c296958690003f032ec565178b4e4c
