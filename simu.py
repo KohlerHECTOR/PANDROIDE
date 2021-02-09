@@ -5,6 +5,7 @@ from environment import make_env
 from algo import Algo
 from visu.visu_trajectories import plot_trajectory
 from visu.visu_weights import plot_weight_histograms, plot_normal_histograms
+from collections import deque
 
 
 def make_simu_from_params(params):
@@ -93,7 +94,7 @@ class Simu:
             if done:
                 print(t)
                 return total_reward
-    def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
+    def evaluate_episode_CEM(self, policy, deterministic, weights, render=False, gamma=1):
         """
          Perform an episode using the policy parameter and return the obtained reward
          Used to evaluate an already trained policy, without storing data for further training
@@ -112,24 +113,27 @@ class Simu:
             action = policy.select_action(state, deterministic)
             # print("action", action)
             next_state, reward, done, _ = self.env.step(action)
-            total_reward += reward
+            total_reward += reward * np.power(gamma, t)
             state = next_state
 
             if done:
-                print(t)
+                #print("test end with reward: {}".format(total_reward))
                 return total_reward
+
     def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
-        pop_size=200
-        elite_frac=0.2
-        sigma=0.1
+        pop_size=100
+        elite_frac=0.05
+        sigma=0.5
         n_elite=int(pop_size*elite_frac)
+        scores_deque = deque(maxlen=100)
+        scores = []
         best_weight = sigma*np.random.randn(policy.get_weights_dim())
 
         for cycle in range(params.nb_cycles):
             weights_pop = [best_weight + (sigma*np.random.randn(policy.get_weights_dim())) for i in range(pop_size)]
-
+            # print(weights_pop)
             # get loss on the trajectory with the current best weights
-            #batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+            #batch = self.make_monte_carlo_batch(params.nb/_trajs, params.render, policy)
             #batch2 = batch.copy_batch()
             #policy_loss=np.zeros(len(weights_pop))
             rewards=np.zeros(pop_size)
@@ -137,10 +141,14 @@ class Simu:
                 #policy_loss[i] = batch.train_policy_cem(policy,weights_pop[i])
                 rewards[i]=self.evaluate_episode_CEM(policy, params.deterministic_eval, weights_pop[i])
             elite_idxs = rewards.argsort()[-n_elite:]
+            #print(elite_idxs)
+            #print(elite_idxs.shape)
             #elite_idxs = policy_loss.argsort()[:n_elite]
             elite_weights = [weights_pop[i] for i in elite_idxs]
-            best_weight = np.array(elite_weights).mean(axis=0)
-
+            #print(elite_weights)
+            best_weight = np.mean(elite_weights, axis=0)
+            #print(best_weight)
+            #print(best_weight.shape)
 
 
 
@@ -151,6 +159,17 @@ class Simu:
             #min
             # policy evaluation part
             total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight)
+            print(total_reward)
+            scores_deque.append(total_reward)
+            scores.append(total_reward)
+            #if cycle % 10 == 0:
+            #print('Episode {}\tAverage Score: {:.2f}'.format(cycle, np.mean(scores_deque)))
+
+            if np.mean(scores_deque)>=90.0:
+                print('\nEnvironment solved in {:d} iterations!\tAverage Score: {:.2f}'.format(cycle-100, np.mean(scores_deque)))
+                break
+            
+
             #print(self.best_reward)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
@@ -219,6 +238,7 @@ class Simu:
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 pw.save(self.best_reward)
+
     def make_monte_carlo_batch(self, nb_episodes, render, policy):
         """
         Create a batch of episodes with a given policy

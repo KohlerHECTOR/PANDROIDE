@@ -2,7 +2,7 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import NormalCEM, BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
@@ -47,7 +47,7 @@ def study_cem(params) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['bernoulliCEM'], 'unsupported policy type'
+    assert params.policy_type in ['bernoulliCEM', 'normalCEM'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = "CEM"
@@ -59,6 +59,8 @@ def study_cem(params) -> None:
         simu.env.reinit()
         if params.policy_type == "bernoulliCEM":
             policy = BernoulliCEM(simu.obs_size, 24, 36, 1)
+        if params.policy_type == "normalCEM":
+            policy = NormalCEM(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
         plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
         simu.trainCEM(pw, params, policy, policy_loss_file, study)
@@ -70,4 +72,4 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
-    plot_results_cem(args)
+    # plot_results_cem(args)

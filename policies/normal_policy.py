@@ -8,8 +8,8 @@ from policies.generic_net import GenericNet
 
 class NormalPolicy(GenericNet):
     """
-     A policy whose probabilistic output is drawn from a Gaussian function
-     """
+    A policy whose probabilistic output is drawn from a Gaussian function
+    """
     def __init__(self, l1, l2, l3, l4, learning_rate):
         super(NormalPolicy, self).__init__()
         self.relu = nn.ReLU()
