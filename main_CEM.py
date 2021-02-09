@@ -2,7 +2,7 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import NormalCEM, BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import NormalCEM,BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
@@ -19,8 +19,6 @@ def create_data_folders() -> None:
     if not os.path.exists("data/save"):
         os.mkdir("./data")
         os.mkdir("./data/save")
-    if not os.path.exists("data/critics"):
-        os.mkdir("./data/critics")
     if not os.path.exists('data/policies/'):
         os.mkdir('data/policies/')
     if not os.path.exists('data/results/'):
@@ -36,9 +34,7 @@ def set_files(study_name, env_name):
     """
     policy_loss_name = "data/save/policy_loss_" + study_name + '_' + env_name + ".txt"
     policy_loss_file = open(policy_loss_name, "w")
-    critic_loss_name = "data/save/critic_loss_" + study_name + '_' + env_name + ".txt"
-    critic_loss_file = open(critic_loss_name, "w")
-    return policy_loss_file, critic_loss_file
+    return policy_loss_file
 
 
 def study_cem(params) -> None:
@@ -50,20 +46,20 @@ def study_cem(params) -> None:
     assert params.policy_type in ['bernoulliCEM', 'normalCEM'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
-    study = "CEM"
+    study = "sum"
     simu = make_simu_from_params(params)
     simu.env.set_file_name(study + '_' + simu.env_name)
-    policy_loss_file, critic_loss_file = set_files(study, simu.env_name)
+    policy_loss_file = set_files(study, simu.env_name)
     print("study : ", study)
     for j in range(params.nb_repet):
         simu.env.reinit()
         if params.policy_type == "bernoulliCEM":
             policy = BernoulliCEM(simu.obs_size, 24, 36, 1)
-        if params.policy_type == "normalCEM":
+        if params.policy_type=='normalCEM':
             policy = NormalCEM(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
         plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
-        simu.trainCEM(pw, params, policy, policy_loss_file, study)
+        simu.trainCEM(pw, params, policy, policy_loss_file, study, params.cem_pop_size, params.cem_sigma, params.cem_elite_pop_frac, params.train_on_loss)
         plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
     chrono.stop()
 
@@ -72,8 +68,4 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
-<<<<<<< HEAD
-    # plot_results_cem(args)
-=======
     #plot_results_cem(args)
->>>>>>> e912fbb906c296958690003f032ec565178b4e4c
