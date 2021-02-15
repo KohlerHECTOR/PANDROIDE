@@ -56,6 +56,14 @@ class NormalCEM(GenericNet):
     def get_weights_dim(self):
         return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*self.fc_mu_size*self.fc_std_size
 
+    def get_weights_dim_s_h1(self):
+        return (self.s_size+1)*self.h1_size
+
+    def get_weights_dim_h1_h2(self):
+        return (self.h1_size+1)*self.h2_size
+
+    def get_weights_dim_h2_mu_std(self):
+        return (self.h2_size+1)*self.fc_mu_size*self.fc_std_size
 
     def forward(self, state):
         """
@@ -86,18 +94,3 @@ class NormalCEM(GenericNet):
                 n = Normal(mu, std)
                 action = n.sample()
             return action.data.numpy().astype(float)
-
-    def train_cem(self, state, action, reward):
-        """
-        Train the policy using a policy gradient approach
-        :param state: the input state(s)
-        :param action: the input action(s)
-        :param reward: the resulting reward
-        :return: the loss applied to train the policy
-        """
-        action = torch.FloatTensor(action)
-        reward = torch.FloatTensor(reward)
-        mu, std = self.forward(state)
-        # Negative score function x reward
-        loss = -Normal(mu, std).log_prob(action).sum(dim=-1) * reward
-        return loss

@@ -64,18 +64,29 @@ def exploit_reward_full(params) -> None:
     for i in range(len(study)):
         plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "reward " + study[i])
 
-def exploit_reward_full_cem(params) -> None:
+def exploit_total_reward_cem(params) -> None:
     path = os.getcwd() + "/data/save"
-    plot_data(path + "/reward_" + '_' + params.env_name + '.txt', "reward " )
-
+    study = params.study_name
+    plot_data(path + "/total_reward_" + study + '_' + params.env_name + '.txt', "total_reward " + study )
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
     plt.legend(loc="lower right")
-    plt.savefig(path + '/../results/rewards_' + make_full_string(params) + '.pdf')
+    plt.savefig(path + '/../results/total_rewards_' + make_full_string(params) + '.pdf')
     plt.show()
 
+def exploit_best_reward_cem(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.study_name
+    plot_data(path + "/best_reward_" + study + '_' + params.env_name + '.txt', "best_reward " + study )
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("Reward")
+    plt.legend(loc="lower right")
+    plt.savefig(path + '/../results/best_rewards_' + make_full_string(params) + '.pdf')
+    plt.show()
 
 def exploit_critic_loss_full(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -104,16 +115,6 @@ def exploit_policy_loss_full(params) -> None:
     plt.savefig(path + '/../results/policy_loss_' + make_full_string(params) + 'pg.pdf')
     plt.show()
 
-def exploit_policy_loss_full_cem(params) -> None:
-    path = os.getcwd() + "/data/save"
-    plot_data(path + "/policy_loss_" + '_' + params.env_name + '.txt', "policy loss " )
-
-    plt.xlabel("Cycles")
-    plt.ylabel("Loss")
-    plt.legend(loc="lower right")
-    plt.title(params.env_name)
-    plt.savefig(path + '/../results/policy_loss_' + make_full_string(params) + 'cem.pdf')
-    plt.show()
 def exploit_nstep(params) -> None:
     path = os.getcwd() + "/data/save"
     steps = [1, 5, 10, 15, 20]
@@ -217,16 +218,6 @@ def plot_results(params) -> None:
         exploit_critic_loss_full(params)
     elif params.study_name == "nstep":
         exploit_nstep(params)
-
-def plot_results_cem(params) -> None:
-    """
-    Plot the results from a study previously saved in files in "./data/save"
-    :param params: parameters of the study
-    :return: nothing
-    """
-    exploit_reward_full_cem(params)
-    exploit_policy_loss_full_cem(params)
-
 
 if __name__ == '__main__':
     args = get_args()

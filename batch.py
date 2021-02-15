@@ -8,7 +8,8 @@ class Batch:
     """
     A batch of samples, collected into a vector of episode
     """
-    def __init__(self):
+    def __init__(self, weights=None):
+        self.weights = weights
         self.episodes = []
         self.size = 0
 
@@ -140,57 +141,31 @@ class Batch:
             losses.append(mean_loss)
         if do_print: print("end of training data :")
         return np.array(losses).mean()
-    def train_policy_td(self, policy):
-        """
-        Trains a policy through a CEM from a batch of data
-        :param policy: the trained policy
-        :return: the average loss over the batch
-        """
-        do_print = False
-        losses = []
-        if do_print: print("training data :")
-        for j in range(self.size):
-            episode = self.episodes[j]
-            state = np.array(episode.state_pool)
-            action = np.array(episode.action_pool)
-            reward = np.array(episode.reward_pool)
-            if do_print: print("state", state)
-            if do_print: print("action", action)
-            if do_print: print("reward", reward)
-            policy_loss = policy.train_pg(state, action, reward)
-            if do_print: print("loss", policy_loss)
-            policy_loss = policy_loss.data.numpy()
-            mean_loss = policy_loss.mean()
-            losses.append(mean_loss)
-        if do_print: print("end of training data :")
-        return np.array(losses).mean()
 
-    def train_policy_cem(self,policy,weights):
+    def train_policy_cem(self, policy, bests_frac):
         """
         Trains a policy through a CEM from a batch of data
         :param policy: the trained policy
         :return: the average loss over the batch
         """
-        policy.set_weights(weights)
         do_print = False
-        losses = []
+        rewards = []
         if do_print: print("training data :")
         for j in range(self.size):
-            #print("ok")
             episode = self.episodes[j]
-            state = np.array(episode.state_pool)
-            action = np.array(episode.action_pool)
-            reward = np.array(episode.reward_pool)
-            if do_print: print("state", state)
-            if do_print: print("action", action)
             if do_print: print("reward", reward)
-            policy_loss = policy.train_cem(state, action, reward)
-            if do_print: print("loss", policy_loss)
-            policy_loss = policy_loss.data.numpy()
-            mean_loss = policy_loss.mean()
-            losses.append(mean_loss)
+            sum_reward = np.sum(episode.reward_pool)
+            rewards.append(sum_reward)
+
+        rewards = np.array(rewards)
+        bests_nb = int(bests_frac * self.size)
+        bests_idxs = rewards.argsort()[-bests_nb:]
+        bests_rewards = [rewards[i] for i in bests_idxs]
+        #print(rewards)
+        average_reward = np.mean(bests_rewards)
+        #print(average_reward)
         if do_print: print("end of training data :")
-        return np.array(losses).mean()
+        return average_reward
 
     def train_policy_through_regress(self, policy):
         """

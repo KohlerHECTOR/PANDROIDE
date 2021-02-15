@@ -7,7 +7,7 @@ from algoCEM import AlgoCEM
 from visu.visu_trajectories import plot_trajectory
 from visu.visu_weights import plot_weight_histograms, plot_normal_histograms
 import math
-from collections import deque
+import os
 
 def make_simu_from_params(params):
     """
@@ -94,7 +94,8 @@ class Simu:
 
             if done:
                 return total_reward
-    def evaluate_episode_CEM(self, policy, deterministic, weights, gamma, render=False):
+                
+    def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
         """
          Perform an episode using the policy parameter and return the obtained reward
          Used to evaluate an already trained policy, without storing data for further training
@@ -112,71 +113,52 @@ class Simu:
         for t in count():
             action = policy.select_action(state, deterministic)
             next_state, reward, done, _ = self.env.step(action)
-            total_reward += reward#*math.pow(gamma, t)#*action
+            total_reward += reward
             state = next_state
 
             if done:
-                #if t == 199:
-                    #print("ok")
-
                 return total_reward
-    def trainCEM(self, pw, params, policy, policy_loss_file, study_name,pop_size, sigma, elite_frac, train_on_loss,  beta=0) -> None:
-        print(pop_size)
-        print(sigma)
-        print(elite_frac)
-        #elite_frac=0.2
-        #sigma=
-        n_elite=int(pop_size*elite_frac)
-        best_weight = sigma*np.random.randn(policy.get_weights_dim())
-        #max_t=0
-        scores_deque = deque(maxlen=100)
-        scores = []
 
+    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
+        best_weights = params.sigma*np.random.randn(policy.get_weights_dim())
+        path = os.getcwd() + "/data/save"
+        study = params.study_name
+        total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
+        best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
+        
         for cycle in range(params.nb_cycles):
-            weights_pop = [best_weight + (sigma*np.random.randn(policy.get_weights_dim())) for i in range(pop_size)]
+            batches = []
+            batches_rewards = np.zeros(params.population)
+            weights = []
 
-            if train_on_loss==True:
-                # get loss on the trajectory with the current best weights
-                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
-                algo = AlgoCEM(study_name, policy, params.gamma, beta, params.nstep)
-                algo.prepare_batch(batch)
-                batch2 = batch.copy_batch()
-                policy_loss=np.zeros(len(weights_pop))
-                for i in range(pop_size):
-                    policy_loss[i] = batch.train_policy_cem(policy,weights_pop[i])
-                elite_idxs = policy_loss.argsort()[:n_elite]
-                #rewards[i]=self.evaluate_episode_CEM(policy, params.deterministic_eval, weights_pop[i])[0]
-                #elite_idxs = rewards.argsort()[-n_elite:]
+            for p in range(params.population):
+                weights.append(best_weights + (params.sigma*np.random.randn(policy.get_weights_dim())))
+            for p in range(params.population):
+                batches.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True, weights[p]))
 
-            if train_on_loss==False:
-                rewards=np.zeros(pop_size)
-                for i in range(pop_size):
-                    rewards[i]=self.evaluate_episode_CEM(policy, params.deterministic_eval, weights_pop[i],params.gamma)
-                elite_idxs = rewards.argsort()[-n_elite:]
-
-
-            elite_weights = [weights_pop[i] for i in elite_idxs]
-            best_weight = np.array(elite_weights).mean(axis=0)
-
-            #policy_loss_best = batch.train_policy_cem(policy,best_weight)
-            #policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
-            #print(policy_loss_best)
-            #min
+                # Update the policy
+            for p in range(params.population):
+                batches_rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
+                
+            elites_nb = int(params.elites_frac * params.population)
+            elites_idxs = batches_rewards.argsort()[-elites_nb:]
+            elites_weights = [batches[i].weights for i in elites_idxs]
+            mean_elites_weights = np.mean(elites_weights, axis=0)
+            
             # policy evaluation part
+            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, mean_elites_weights)
+            total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
 
-            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight, params.gamma)
-            scores_deque.append(total_reward)
-            scores.append(total_reward)
-            if cycle % 10 == 0:
-                print('Episode {}\tAverage Score: {:.2f}'.format(cycle, np.mean(scores_deque)))
-
-
-            #if t>max_t:
-            #    max_t=t
-            #print(self.best_reward)
+            # save best reward agent (no need for averaging if the policy is deterministic)
+            print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
+                best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
+                best_weights = mean_elites_weights
+                print("Weights changed :", self.best_reward)
                 pw.save(self.best_reward)
+        total_reward_file.close()
+        best_reward_file.close()
 
     def train_on_one_episode(self, policy, deterministic, render):
         """
@@ -186,8 +168,8 @@ class Simu:
         :param render: whether the episode is displayed or not (True or False)
         :return: the samples stored into an episode
         """
-        state = self.reset(render)
         episode = Episode()
+        state = self.reset(render)
         for t in count():
             action = policy.select_action(state, deterministic)
             next_state, _, done = self.take_step(state, action, episode, render)
@@ -234,6 +216,7 @@ class Simu:
 
             # policy evaluation part
             total_reward = self.evaluate_episode(policy, params.deterministic_eval)
+            print(total_reward)
             # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
@@ -241,7 +224,8 @@ class Simu:
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 pw.save(self.best_reward)
-    def make_monte_carlo_batch(self, nb_episodes, render, policy):
+
+    def make_monte_carlo_batch(self, nb_episodes, render, policy, weights_flag=False, weights=None):
         """
         Create a batch of episodes with a given policy
         Used in Monte Carlo approaches
@@ -250,7 +234,11 @@ class Simu:
         :param policy: the policy controlling the agent
         :return: the resulting batch of episodes
         """
-        batch = Batch()
+        if weights_flag == True:
+            batch = Batch(weights)
+            policy.set_weights(weights)
+        else:
+            batch = Batch()
         self.env.set_reward_flag(False)
         self.env.set_duration_flag(False)
         for e in range(nb_episodes):

@@ -7,7 +7,8 @@ from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
 from visu.visu_policies import plot_policy
-from visu.visu_results import plot_results_cem
+from visu.visu_results import exploit_total_reward_cem
+from visu.visu_results import exploit_best_reward_cem
 import gym
 
 
@@ -46,11 +47,11 @@ def study_cem(params) -> None:
     assert params.policy_type in ['bernoulliCEM', 'normalCEM'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
-    study = "sum"
     simu = make_simu_from_params(params)
-    simu.env.set_file_name(study + '_' + simu.env_name)
-    policy_loss_file = set_files(study, simu.env_name)
+    study = "cem"
     print("study : ", study)
+    simu.env.set_file_name(str(study) + '_' + simu.env_name)
+    policy_loss_file = set_files(str(study), simu.env_name)
     for j in range(params.nb_repet):
         simu.env.reinit()
         if params.policy_type == "bernoulliCEM":
@@ -59,7 +60,7 @@ def study_cem(params) -> None:
             policy = NormalCEM(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
         plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
-        simu.trainCEM(pw, params, policy, policy_loss_file, study, params.cem_pop_size, params.cem_sigma, params.cem_elite_pop_frac, params.train_on_loss)
+        simu.trainCEM(pw, params, policy, policy_loss_file, params.study_name)
         plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
     chrono.stop()
 
@@ -68,4 +69,5 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
-    #plot_results_cem(args)
+    exploit_total_reward_cem(args)
+    exploit_best_reward_cem(args)
