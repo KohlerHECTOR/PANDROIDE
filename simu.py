@@ -95,7 +95,7 @@ class Simu:
             if done:
                 return total_reward
 
-    def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
+    def evaluate_episode_CEM(self, policy, deterministic, render=False):
         """
          Perform an episode using the policy parameter and return the obtained reward
          Used to evaluate an already trained policy, without storing data for further training
@@ -104,7 +104,6 @@ class Simu:
          :param render: whether the episode is displayed or not (True or False)
          :return: the total reward collected during the episode
          """
-        policy.set_weights(weights)
         self.env.set_reward_flag(False)
         self.env.set_duration_flag(False)
         state = self.reset(render)
@@ -119,46 +118,101 @@ class Simu:
             if done:
                 return total_reward
 
-    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
-        best_weights = params.sigma*np.random.randn(policy.get_weights_dim())
+    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0, fix_layers=True) -> None:
+        #random init of the neural network.
+        init_weights = params.sigma*np.random.randn(policy.get_weights_dim())
+        policy.set_weights(init_weights)
+
+        #make data files to plot the sum of reward at each episode.
         path = os.getcwd() + "/data/save"
         study = params.study_name
         total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
-        best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
+        #best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
 
-        for cycle in range(params.nb_cycles):
-            batches = []
-            batches_rewards = np.zeros(params.population)
-            weights = []
+        #We learn all the weights of the neural network
+        if not fix_layers:
+            best_weights=init_weights
+            for cycle in range(params.nb_cycles):
+                batches = []
+                rewards = np.zeros(params.population)
+                weights = []
 
-            for p in range(params.population):
-                weights.append(best_weights + (params.sigma*np.random.randn(policy.get_weights_dim())))
-            for p in range(params.population):
-                batches.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True, weights[p]))
+                for p in range(params.population):
+                    weights.append(best_weights + (params.sigma*np.random.randn(policy.get_weights_dim())))
+                for p in range(params.population):
+                    policy.set_weights(weights[p])
+                    batches.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True))
+
+                    # Update the policy
+                for p in range(params.population):
+                    rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
+
+                elites_nb = int(params.elites_frac * params.population)
+                elites_idxs = rewards.argsort()[-elites_nb:]
+                elites_weights = [weights[i] for i in elites_idxs]
+
+                #update the best weights
+                best_weights = np.array(elites_weights).mean(axis=0)
+
+                # policy evaluation part
+                policy.set_weights(best_weights)
+                total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval)
+                total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+
+
+                # save best reward agent (no need for averaging if the policy is deterministic)
+                print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
+                if self.best_reward < total_reward:
+                    self.best_reward = total_reward
+                    #best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
+                    #best_weights = mean_elites_weights
+                    print("Weights changed :", self.best_reward)
+                pw.save(self.best_reward)
+            total_reward_file.close()
+                #best_reward_file.close()
+
+            #We learn only the weights of the last layer.
+        else:
+            print("ok")
+            best_weights=init_weights[-policy.get_last_layer_dim():]
+            for cycle in range(params.nb_cycles):
+                batches = []
+                rewards = np.zeros(params.population)
+                weights = []
+
+                for p in range(params.population):
+                    weights.append(best_weights + (params.sigma*np.random.randn(policy.get_last_layer_dim())))
+                for p in range(params.population):
+                    policy.set_last_layer_weights(weights[p])
+                    batches.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True))
 
                 # Update the policy
-            for p in range(params.population):
-                batches_rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
+                for p in range(params.population):
+                    rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
 
-            elites_nb = int(params.elites_frac * params.population)
-            elites_idxs = batches_rewards.argsort()[-elites_nb:]
-            elites_weights = [batches[i].weights for i in elites_idxs]
-            mean_elites_weights = np.mean(elites_weights, axis=0)
+                elites_nb = int(params.elites_frac * params.population)
+                elites_idxs = rewards.argsort()[-elites_nb:]
+                elites_weights = [weights[i] for i in elites_idxs]
 
-            # policy evaluation part
-            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, mean_elites_weights)
-            total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+                #update the best weight
+                best_weights = np.array(elites_weights).mean(axis=0)
 
-            # save best reward agent (no need for averaging if the policy is deterministic)
-            print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
-            if self.best_reward < total_reward:
-                self.best_reward = total_reward
-                best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
-                best_weights = mean_elites_weights
-                print("Weights changed :", self.best_reward)
+                # policy evaluation part
+                policy.set_last_layer_weights(best_weights)
+                total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval)
+                total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+
+                # save best reward agent (no need for averaging if the policy is deterministic)
+                print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
+                if self.best_reward < total_reward:
+                    self.best_reward = total_reward
+                    #best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
+                    print("Weights changed :", self.best_reward)
                 pw.save(self.best_reward)
-        total_reward_file.close()
-        best_reward_file.close()
+            total_reward_file.close()
+                #best_reward_file.close()
+
+
     def trainCEMbis(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
         sigma=params.sigma
         n_elite = int(params.elites_frac * params.population)
@@ -197,7 +251,7 @@ class Simu:
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 #best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
-                #pw.save(self.best_reward)
+            pw.save(self.best_reward)
         total_reward_file.close()
         #best_reward_file.close()
 
@@ -277,7 +331,6 @@ class Simu:
         """
         if weights_flag == True:
             batch = Batch(weights)
-            policy.set_weights(weights)
         else:
             batch = Batch()
         self.env.set_reward_flag(False)
