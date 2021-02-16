@@ -37,10 +37,11 @@ class NormalCEM(GenericNet):
         fc2_end = fc1_end+(h1_size*h2_size)+h2_size
         fc2_W = torch.from_numpy(weights[fc1_end:fc1_end+(h1_size*h2_size)].reshape(h1_size, h2_size))
         fc2_b = torch.from_numpy(weights[fc1_end+(h1_size*h2_size):fc2_end])
+        fc_mu_end=fc2_end+(h2_size*fc_mu_size)+fc_mu_size
         fc_mu_W = torch.from_numpy(weights[fc2_end:fc2_end+(h2_size*fc_mu_size)].reshape(h2_size, fc_mu_size))
-        fc_mu_b = torch.from_numpy(weights[fc2_end+(h2_size*fc_mu_size):])
-        fc_std_W = torch.from_numpy(weights[fc2_end:fc2_end+(h2_size*fc_std_size)].reshape(h2_size, fc_std_size))
-        fc_std_b = torch.from_numpy(weights[fc2_end+(h2_size*fc_std_size):])
+        fc_mu_b = torch.from_numpy(weights[fc2_end+(h2_size*fc_mu_size):fc_mu_end])
+        fc_std_W = torch.from_numpy(weights[fc_mu_end:fc_mu_end+(h2_size*fc_std_size)].reshape(h2_size, fc_std_size))
+        fc_std_b = torch.from_numpy(weights[fc_mu_end+(h2_size*fc_std_size):])
         # set the weights for each layer
         self.fc1.weight.data.copy_(fc1_W.view_as(self.fc1.weight.data))
         self.fc1.bias.data.copy_(fc1_b.view_as(self.fc1.bias.data))
@@ -54,7 +55,7 @@ class NormalCEM(GenericNet):
 
 
     def get_weights_dim(self):
-        return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*self.fc_mu_size*self.fc_std_size
+        return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*2#self.fc_mu_size*self.fc_std_size
 
     def get_weights_dim_s_h1(self):
         return (self.s_size+1)*self.h1_size
@@ -93,4 +94,5 @@ class NormalCEM(GenericNet):
             else:
                 n = Normal(mu, std)
                 action = n.sample()
+                #print(action.data.numpy().astype(float))
             return action.data.numpy().astype(float)
