@@ -163,6 +163,7 @@ class Batch:
         bests_rewards = [rewards[i] for i in bests_idxs]
         #print(rewards)
         average_reward = np.mean(bests_rewards)
+        #average_reward = np.mean(rewards)
         #print(average_reward)
         if do_print: print("end of training data :")
         return average_reward

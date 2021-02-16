@@ -94,7 +94,7 @@ class Simu:
 
             if done:
                 return total_reward
-                
+
     def evaluate_episode_CEM(self, policy, deterministic, weights, render=False):
         """
          Perform an episode using the policy parameter and return the obtained reward
@@ -105,8 +105,8 @@ class Simu:
          :return: the total reward collected during the episode
          """
         policy.set_weights(weights)
-        self.env.set_reward_flag(True)
-        self.env.set_duration_flag(True)
+        self.env.set_reward_flag(False)
+        self.env.set_duration_flag(False)
         state = self.reset(render)
         total_reward = 0
         #final_t=0
@@ -125,7 +125,7 @@ class Simu:
         study = params.study_name
         total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
         best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
-        
+
         for cycle in range(params.nb_cycles):
             batches = []
             batches_rewards = np.zeros(params.population)
@@ -139,12 +139,12 @@ class Simu:
                 # Update the policy
             for p in range(params.population):
                 batches_rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
-                
+
             elites_nb = int(params.elites_frac * params.population)
             elites_idxs = batches_rewards.argsort()[-elites_nb:]
             elites_weights = [batches[i].weights for i in elites_idxs]
             mean_elites_weights = np.mean(elites_weights, axis=0)
-            
+
             # policy evaluation part
             total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, mean_elites_weights)
             total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
@@ -159,8 +159,49 @@ class Simu:
                 pw.save(self.best_reward)
         total_reward_file.close()
         best_reward_file.close()
+    def trainCEMbis(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
+        sigma=params.sigma
+        n_elite = int(params.elites_frac * params.population)
+        best_weight = params.sigma*np.random.randn(policy.get_weights_dim())
+        path = os.getcwd() + "/data/save"
+        study = params.study_name
+        total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
+        best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
 
-    def train_on_one_episode(self, policy, deterministic, render):
+        for cycle in range(params.nb_cycles):
+            weights_pop = [best_weight + (sigma*np.random.randn(policy.get_weights_dim())) for i in range(params.population)]
+            #batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+            #algo = AlgoCEM(study_name, policy, params.gamma, beta, params.nstep)
+            #algo.prepare_batch(batch)
+            #batch2 = batch.copy_batch()
+            mean_total_rewards=np.zeros(params.population)
+            for i in range(params.population):
+                average_tot_sum_on_traj=0
+                for j in range(params.nb_trajs):
+                    average_tot_sum_on_traj+=self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight)
+                mean_total_rewards[i]=average_tot_sum_on_traj/params.nb_trajs
+            elite_idxs = mean_total_rewards.argsort()[-n_elite:]
+
+
+            elite_weights = [weights_pop[i] for i in elite_idxs]
+            #print(elite_weights)
+            best_weight = np.array(elite_weights).mean(axis=0)
+
+            # policy evaluation part
+            total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval, best_weight)
+
+            total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+
+            # save best reward agent (no need for averaging if the policy is deterministic)
+            print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
+            if self.best_reward < total_reward:
+                self.best_reward = total_reward
+                #best_reward_file.write(str(cycle) + ' ' + str(self.best_reward) + '\n')
+                #pw.save(self.best_reward)
+        total_reward_file.close()
+        #best_reward_file.close()
+
+    def train_on_one_episode(self, policy, deterministic, render=False):
         """
         Perform an episode using the policy parameter and return the corresponding samples into an episode structure
         :param policy: the policy controlling the agent

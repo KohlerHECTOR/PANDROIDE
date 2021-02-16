@@ -2,13 +2,15 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import NormalCEM,BernoulliCEM, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import NormalCEM,BernoulliCEM, NormalSimple,BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
 from visu.visu_policies import plot_policy
 from visu.visu_results import exploit_total_reward_cem
 from visu.visu_results import exploit_best_reward_cem
+from visu.visu_results import plot_results
+from numpy.random import random
 import gym
 
 
@@ -44,7 +46,7 @@ def study_cem(params) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['bernoulliCEM', 'normalCEM'], 'unsupported policy type'
+    assert params.policy_type in ['bernoulliCEM', 'normalCEM','normalSimple'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
     simu = make_simu_from_params(params)
@@ -58,10 +60,12 @@ def study_cem(params) -> None:
             policy = BernoulliCEM(simu.obs_size, 24, 36, 1)
         if params.policy_type=='normalCEM':
             policy = NormalCEM(simu.obs_size, 24, 36, 1)
+        if params.policy_type=="normalSimple":
+            policy = NormalSimple(random(simu.obs_size))
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-        plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
+        #plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
         simu.trainCEM(pw, params, policy, policy_loss_file, params.study_name)
-        plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
+        #plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
     chrono.stop()
 
 if __name__ == '__main__':
@@ -69,5 +73,6 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
+    #plot_results(args)
     exploit_total_reward_cem(args)
-    exploit_best_reward_cem(args)
+    #exploit_best_reward_cem(args)
