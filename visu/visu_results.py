@@ -57,6 +57,17 @@ def exploit_duration_full(params) -> None:
     plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'pg.pdf')
     plt.show()
 
+def exploit_duration_full_cem(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.study_name
+    plot_data(path + "/duration_cem_" + study + '_' + params.env_name + '.txt', "duration " + study)
+
+    plt.xlabel("Episodes")
+    plt.ylabel("Duration")
+    plt.legend(loc="lower right")
+    plt.title(params.env_name)
+    plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'cem.pdf')
+    plt.show()
 
 def exploit_reward_full(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -74,18 +85,6 @@ def exploit_total_reward_cem(params) -> None:
     plt.ylabel("Reward")
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/total_rewards_' + make_full_string(params) + '.pdf')
-    plt.show()
-
-def exploit_best_reward_cem(params) -> None:
-    path = os.getcwd() + "/data/save"
-    study = params.study_name
-    plot_data(path + "/best_reward_" + study + '_' + params.env_name + '.txt', "best_reward " + study )
-
-    plt.title(params.env_name)
-    plt.xlabel("Episodes")
-    plt.ylabel("Reward")
-    plt.legend(loc="lower right")
-    plt.savefig(path + '/../results/best_rewards_' + make_full_string(params) + '.pdf')
     plt.show()
 
 def exploit_critic_loss_full(params) -> None:

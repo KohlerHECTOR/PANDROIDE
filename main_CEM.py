@@ -2,13 +2,13 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import NormalCEM,BernoulliCEM, NormalSimple,BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import NormalCEM,BernoulliCEM,BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
 from visu.visu_policies import plot_policy
 from visu.visu_results import exploit_total_reward_cem
-from visu.visu_results import exploit_best_reward_cem
+from visu.visu_results import exploit_duration_full_cem
 from visu.visu_results import plot_results
 from numpy.random import random
 import gym
@@ -75,4 +75,4 @@ if __name__ == '__main__':
     study_cem(args)
     #plot_results(args)
     exploit_total_reward_cem(args)
-    #exploit_best_reward_cem(args)
+    exploit_duration_full_cem(args)

@@ -57,10 +57,15 @@ class BernoulliCEM(GenericNet):
         self.fc3.weight.data.copy_(fc3_W.view_as(self.fc3.weight.data))
         self.fc3.bias.data.copy_(fc3_b.view_as(self.fc3.bias.data))
 
+    def set_last_layer_weights(self,weights):
+        return 1
 
     def get_weights_dim(self):
         return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*self.a_size
 
+    def get_last_layer_dim(self):
+        return (self.h2_size+1)*2
+        
     def forward(self, state):
         """
          Compute the pytorch tensors resulting from sending a state or vector of states through the policy network

@@ -56,6 +56,7 @@ class NormalCEM(GenericNet):
 
     def get_weights_dim(self):
         return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*2#self.fc_mu_size*self.fc_std_size
+    
     def set_last_layer_weights(self,weights):
         h2_size = self.h2_size
         fc_mu_size = self.fc_mu_size

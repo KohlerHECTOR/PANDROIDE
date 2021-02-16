@@ -107,18 +107,20 @@ class Simu:
         self.env.set_reward_flag(False)
         self.env.set_duration_flag(False)
         state = self.reset(render)
+        duration = 0
         total_reward = 0
         #final_t=0
         for t in count():
+            duration += 1
             action = policy.select_action(state, deterministic)
             next_state, reward, done, _ = self.env.step(action)
             total_reward += reward
             state = next_state
 
             if done:
-                return total_reward
+                return total_reward, duration
 
-    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0, fix_layers=True) -> None:
+    def trainCEM(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
         #random init of the neural network.
         init_weights = params.sigma*np.random.randn(policy.get_weights_dim())
         policy.set_weights(init_weights)
@@ -127,10 +129,9 @@ class Simu:
         path = os.getcwd() + "/data/save"
         study = params.study_name
         total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
-        #best_reward_file = open(path + "/best_reward_" + study + '_' + params.env_name + '.txt', 'w')
-
+        duration_file = open(path + "/duration_cem_" + params.study_name + '_' + params.env_name + '.txt', 'w')
         #We learn all the weights of the neural network
-        if not fix_layers:
+        if not params.fix_layers:
             best_weights=init_weights
             for cycle in range(params.nb_cycles):
                 batches = []
@@ -156,8 +157,9 @@ class Simu:
 
                 # policy evaluation part
                 policy.set_weights(best_weights)
-                total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval)
+                total_reward, duration = self.evaluate_episode_CEM(policy, params.deterministic_eval)
                 total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+                duration_file.write(str(cycle) + ' ' + str(duration) + '\n')
 
 
                 # save best reward agent (no need for averaging if the policy is deterministic)
@@ -169,7 +171,7 @@ class Simu:
                     print("Weights changed :", self.best_reward)
                 pw.save(self.best_reward)
             total_reward_file.close()
-                #best_reward_file.close()
+            duration_file.close()
 
             #We learn only the weights of the last layer.
         else:
@@ -199,8 +201,9 @@ class Simu:
 
                 # policy evaluation part
                 policy.set_last_layer_weights(best_weights)
-                total_reward = self.evaluate_episode_CEM(policy, params.deterministic_eval)
+                total_reward, duration = self.evaluate_episode_CEM(policy, params.deterministic_eval)
                 total_reward_file.write(str(cycle) + ' ' + str(total_reward) + '\n')
+                duration_file.write(str(cycle) + ' ' + str(duration) + '\n')
 
                 # save best reward agent (no need for averaging if the policy is deterministic)
                 print("best :", self.best_reward, "| new :", total_reward, "| test :", self.best_reward < total_reward)
@@ -210,7 +213,7 @@ class Simu:
                     print("Weights changed :", self.best_reward)
                 pw.save(self.best_reward)
             total_reward_file.close()
-                #best_reward_file.close()
+            duration_file.close()
 
 
     def trainCEMbis(self, pw, params, policy, policy_loss_file, study_name, beta=0) -> None:
