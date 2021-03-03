@@ -154,8 +154,9 @@ class Batch:
         for j in range(self.size):
             episode = self.episodes[j]
             if do_print: print("reward", reward)
-            sum_reward = np.sum(episode.reward_pool)
-            rewards.append(sum_reward)
+            reward = np.sum(episode.reward_pool)
+            #reward = episode.reward_pool[-1]
+            rewards.append(reward)
 
         rewards = np.array(rewards)
         bests_nb = int(bests_frac * self.size)

@@ -32,14 +32,13 @@ def get_args():
     # environment setting
     parser.add_argument('--env_name', type=str, default='CartPoleContinuous-v0', help='the environment name')
     parser.add_argument('--env_obs_space_name', type=str, default=["pos", "angle"])  # ["pos", "angle", "vx", "v angle"]
-    parser.add_argument('--render', type=bool, default=False, help='visualize the run or not')
+    parser.add_argument('--render', type=bool, default=False, help='visualize the run or not') # Only False when not used
     # study settings
     parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem')
     parser.add_argument('--critic_update_method', type=str, default="dataset", help='critic update method: batch or dataset')
-    parser.add_argument('--policy_type', type=str, default="bernoulli", help='policy type: bernoulli, normal, squashedGaussian, discrete, bernoulliCEM, normalCEM')
-    parser.add_argument('--cem_type', type=str, default='111', help='study name: 010, 111, 110, 011, 101, 100, 001')
+    parser.add_argument('--policy_type', type=str, default="bernoulli", help='policy type: bernoulli, normal, squashedGaussian, discrete')
     parser.add_argument('--team_name', type=str, default='default_team', help='team name')
-    parser.add_argument('--deterministic_eval', type=bool, default=True, help='deterministic policy evaluation?')
+    parser.add_argument('--deterministic_eval', type=bool, default=True, help='deterministic policy evaluation?') # Only False when not used
     # study parameters
     parser.add_argument('--nb_repet', type=int, default=10, help='number of repetitions to get statistics')
     parser.add_argument('--nb_cycles', type=int, default=40, help='number of training cycles')
@@ -48,6 +47,7 @@ def get_args():
     # algo settings
     parser.add_argument('--gradients', type=str, nargs='+', default=['sum', 'discount', 'normalize'], help='other: baseline, beta')
     parser.add_argument('--critic_estim_method', type=str, default="td", help='critic estimation method: mc, td or nstep')
+    parser.add_argument('--fix_layers', type=str, default="False", help='only for normal')
     # learning parameters
     
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
@@ -57,9 +57,9 @@ def get_args():
     parser.add_argument('--nstep', type=int, default=5, help='n in n-step return')
     parser.add_argument('--batch_size', type=int, default=64, help='size of a minibatch')
     parser.add_argument('--nb_workers', type=int, default=2, help='number of cpus to collect samples')
-    parser.add_argument('--shuffle', type=bool, default=True, help='shuffle replay samples or not')
+    parser.add_argument('--shuffle', type=bool, default=True, help='shuffle replay samples or not') # Only False when not used
     parser.add_argument('--max_episode_steps', type=int, default=None, help='duration of an episode (step limit)')
-    parser.add_argument('--sigma', type=float, default=1, help='noise')
+    parser.add_argument('--sigma', type=float, default=1.0, help='noise')
     parser.add_argument('--elites_frac',type=float, default=0.2, help='proportion of the population to keep at each iter')
     parser.add_argument('--bests_frac',type=float, default=0.25, help='proportion of the population to keep at each iter')
     parser.add_argument('--population',type=int, default=100, help='population')

@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from arguments import make_full_string, get_args
+import shutil
 import seaborn as sns
 sns.set()
 
@@ -44,12 +45,12 @@ def plot_from_file(filename, label) -> None:
     plt.plot(data, label=label)
 
 
-def exploit_duration_full(params) -> None:
+def exploit_duration_full_cem_vs_pg(params, env, study) -> None:
     path = os.getcwd() + "/data/save"
-    study = params.gradients
-    for i in range(len(study)):
-        plot_data(path + "/duration_" + study[i] + '_' + params.env_name + '.txt', "duration " + study[i])
-
+    study = params.studyname
+    plot_data(path + "/duration_" + study + '_' + env + '.txt', "duration " + study)
+    plot_data(path + "/duration_cem_" + study + '_' + env + '.txt', "duration " + study)
+    
     plt.xlabel("Episodes")
     plt.ylabel("Duration")
     plt.legend(loc="lower right")
@@ -57,10 +58,37 @@ def exploit_duration_full(params) -> None:
     plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'pg.pdf')
     plt.show()
 
+def exploit_total_reward_cem_vs_pg(params) -> None:
+    path = os.getcwd() + "/data/save"
+    plot_data(path + "/reward_" + "pg" + '_' + params.env_name + '.txt', "reward " + "pg")
+    plot_data(path + "/reward_" + "cem" + '_' + params.env_name + '.txt', "reward " + "cem")
+    plot_data(path + "/reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt', "reward_fixed_layers " + "cem")
+
+    plt.xlabel("Episodes")
+    plt.ylabel("Reward")
+    plt.legend(loc="lower right")
+    plt.title(params.env_name)
+    plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'pgvscem.pdf')
+    plt.show()
+
 def exploit_duration_full_cem(params) -> None:
     path = os.getcwd() + "/data/save"
-    study = params.study_name
-    plot_data(path + "/duration_cem_" + study + '_' + params.env_name + '.txt', "duration " + study)
+    study = params.gradients
+    for i in range(1):
+        plot_data(path + "/duration_" + study[i] + '_' + params.env_name + '.txt', "duration " + study[i])
+
+    plt.xlabel("Episodes")
+    plt.ylabel("Duration")
+    plt.legend(loc="lower right")
+    plt.title(params.env_name)
+    plt.savefig(path + '/../results/durations_cem_' + make_full_string(params) + 'cem.pdf')
+    plt.show()
+
+def exploit_duration_full(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/duration_" + study[i] + '_' + params.env_name + '.txt', "duration " + study[i])
 
     plt.xlabel("Episodes")
     plt.ylabel("Duration")
@@ -72,19 +100,28 @@ def exploit_duration_full_cem(params) -> None:
 def exploit_reward_full(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
+    shutil.copy(path + "/reward_" + "sum" + '_' + params.env_name + '.txt', path + "/reward_" + "pg" + '_' + params.env_name + '.txt')
     for i in range(len(study)):
         plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "reward " + study[i])
 
+def exploit_reward_full_cem(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    #for i in range(1):
+    plot_data(path + "/reward_" + "cem" + '_' + params.env_name + '.txt', "reward " + "cem")
+
 def exploit_total_reward_cem(params) -> None:
     path = os.getcwd() + "/data/save"
-    study = params.study_name
-    plot_data(path + "/total_reward_" + study + '_' + params.env_name + '.txt', "total_reward " + study )
-
+    study = params.gradients
+    #for i in range(1):
+    plot_data(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', "total_reward " + "cem")
+    #shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt')
+    #shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/reward_" + "cem" + '_' + params.env_name + '.txt')
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
     plt.legend(loc="lower right")
-    plt.savefig(path + '/../results/total_rewards_' + make_full_string(params) + '.pdf')
+    plt.savefig(path + '/../results/total_rewards_cem_' + make_full_string(params) + '.pdf')
     plt.show()
 
 def exploit_critic_loss_full(params) -> None:

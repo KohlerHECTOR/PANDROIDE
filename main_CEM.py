@@ -2,14 +2,15 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import NormalCEM,BernoulliCEM,BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
 from visu.visu_policies import plot_policy
 from visu.visu_results import exploit_total_reward_cem
 from visu.visu_results import exploit_duration_full_cem
-from visu.visu_results import plot_results
+from visu.visu_results import exploit_reward_full_cem
+from visu.visu_results import exploit_total_reward_cem_vs_pg
 from numpy.random import random
 import gym
 
@@ -30,14 +31,14 @@ def create_data_folders() -> None:
 
 def set_files(study_name, env_name):
     """
-    Create files to save the policy loss and the critic loss
+    Create files to save the reward by duration
     :param study_name: the name of the study
     :param env_name: the name of the environment
     :return:
     """
-    policy_loss_name = "data/save/policy_loss_" + study_name + '_' + env_name + ".txt"
-    policy_loss_file = open(policy_loss_name, "w")
-    return policy_loss_file
+    reward_name = "data/save/total_reward_" + "cem" + '_' + env_name + '.txt'
+    reward_file = open(reward_name, "w")
+    return reward_file
 
 
 def study_cem(params) -> None:
@@ -46,26 +47,25 @@ def study_cem(params) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['bernoulliCEM', 'normalCEM','normalSimple'], 'unsupported policy type'
+    assert params.policy_type in ['bernoulli', 'normal'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
+    study = params.gradients
     simu = make_simu_from_params(params)
-    study = "cem"
-    print("study : ", study)
-    simu.env.set_file_name(str(study) + '_' + simu.env_name)
-    policy_loss_file = set_files(str(study), simu.env_name)
-    for j in range(params.nb_repet):
-        simu.env.reinit()
-        if params.policy_type == "bernoulliCEM":
-            policy = BernoulliCEM(simu.obs_size, 24, 36, 1)
-        if params.policy_type=='normalCEM':
-            policy = NormalCEM(simu.obs_size, 24, 36, 1)
-        if params.policy_type=="normalSimple":
-            policy = NormalSimple(random(simu.obs_size))
-        pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-        #plot_policy(policy, simu.env, True, simu.env_name, study, '_ante_', j, plot=False)
-        simu.trainCEM(pw, params, policy, policy_loss_file, params.study_name)
-        #plot_policy(policy, simu.env, True, simu.env_name, study, '_post_', j, plot=False)
+    for i in range(1): #len(study) Only sum here
+        simu.env.set_file_name(study[i] + '_' + simu.env_name)
+        reward_file = set_files(study[i], simu.env_name)
+        print("study : ", study[i])
+        for j in range(params.nb_repet):
+            simu.env.reinit()
+            if params.policy_type == "bernoulli":
+                policy = BernoulliPolicy(simu.obs_size, 24, 36, 1)
+            if params.policy_type=="normal":
+                policy = NormalPolicy(simu.obs_size, 24, 36, 1)
+            pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+            #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
+            simu.train(pw, params, policy, False, reward_file, "", study[i], 0, True)
+            #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
     chrono.stop()
 
 if __name__ == '__main__':
@@ -73,6 +73,9 @@ if __name__ == '__main__':
     print(args)
     create_data_folders()
     study_cem(args)
-    #plot_results(args)
-    exploit_total_reward_cem(args)
+    #exploit_reward_full_cem(args)
     exploit_duration_full_cem(args)
+    exploit_total_reward_cem(args)
+    #To make plot to compare pg and cem
+    #exploit_duration_full_cem_vs_pg(args, study, env)
+    exploit_total_reward_cem_vs_pg(args)
