@@ -64,6 +64,9 @@ def get_args():
     parser.add_argument('--bests_frac',type=float, default=0.25, help='proportion of the population to keep at each iter')
     parser.add_argument('--population',type=int, default=100, help='population')
 
+    # plots settings
+    parser.add_argument('--night_mode',type=bool, default=False, help='dont show the plots')
+    parser.add_argument('--plot_mode',type=str, default="all", help='to launch several studies at the same time')
     '''
     parser.add_argument('--save-interval', type=int, default=5, help='the interval that save the trajectory')
     parser.add_argument('--seed', type=int, default=123, help='random seed')
