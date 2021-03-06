@@ -108,20 +108,20 @@ class Simu:
             best_weights=init_weights[-policy.get_weights_dim(params.fix_layers):]
         for cycle in range(params.nb_cycles):
             if is_cem == True:
-                batches = []
+                # batches = np.zeros(params.population)
                 #batch2 = []
                 rewards = np.zeros(params.population)
-                weights = []
+                weights = np.zeros((params.population,policy.get_weights_dim(params.fix_layers)))
 
                 for p in range(params.population):
-                    weights.append(best_weights + (params.sigma*np.random.randn(policy.get_weights_dim(params.fix_layers))))
+                    weights[p]=best_weights + (params.sigma*np.random.randn(policy.get_weights_dim(params.fix_layers)))
                     policy.set_weights(weights[p], params.fix_layers)
-                    batches.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True))
+                    batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
                     #batch2.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True))
                     #algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
                     #algo.prepare_batch(batches[p])
                     # Update the policy
-                    rewards[p] = batches[p].train_policy_cem(policy, params.bests_frac)
+                    rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
                     #plot_trajectory(batch2[p], self.env, cycle+1)
 
                 elites_nb = int(params.elites_frac * params.population)
@@ -129,12 +129,13 @@ class Simu:
                 elites_weights = [weights[i] for i in elites_idxs]
                 #update the best weights
                 best_weights = np.array(elites_weights).mean(axis=0)
+                print(best_weights)
                 # policy evaluation part
                 policy.set_weights(best_weights, params.fix_layers)
-                
+
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
 
-                # Update the file for the plot 
+                # Update the file for the plot
                 reward_file = policy_loss_file
                 reward_file.write(str(cycle) + " " + str(total_reward) + "\n")
 
@@ -147,7 +148,7 @@ class Simu:
                 algo.prepare_batch(batch)
                 policy_loss = batch.train_policy_td(policy)
                 #print(policy_loss)
-            
+
                 # Update the critic
                 assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
                 if params.critic_update_method == "dataset":
@@ -157,11 +158,11 @@ class Simu:
                 critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
                 policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
                 plot_trajectory(batch2, self.env, cycle+1)
-            
+
                 # policy evaluation part
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
             print(total_reward)
-            
+
 
             # save best reward agent (no need for averaging if the policy is deterministic)
             #print(#self.best_reward)
@@ -187,7 +188,7 @@ class Simu:
             if done:
                 # print("train nb steps:", t)
                 return episode
-    
+
     def make_monte_carlo_batch(self, nb_episodes, render, policy, weights_flag=False, weights=None):
         """
         Create a batch of episodes with a given policy
