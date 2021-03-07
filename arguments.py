@@ -49,7 +49,7 @@ def get_args():
     parser.add_argument('--critic_estim_method', type=str, default="td", help='critic estimation method: mc, td or nstep')
     parser.add_argument('--fix_layers', type=str, default="False", help='only for normal')
     # learning parameters
-    
+
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
     parser.add_argument('--lr_actor', type=float, default=0.01, help='learning rate of the actor')
     parser.add_argument('--lr_critic', type=float, default=0.01, help='learning rate of the critic')
@@ -60,6 +60,7 @@ def get_args():
     parser.add_argument('--shuffle', type=bool, default=True, help='shuffle replay samples or not') # Only False when not used
     parser.add_argument('--max_episode_steps', type=int, default=None, help='duration of an episode (step limit)')
     parser.add_argument('--sigma', type=float, default=1.0, help='noise')
+    parser.add_argument('--sigma_bis', type=float, default=1.0, help='noise of initial last  layer')
     parser.add_argument('--elites_frac',type=float, default=0.2, help='proportion of the population to keep at each iter')
     parser.add_argument('--bests_frac',type=float, default=0.25, help='proportion of the population to keep at each iter')
     parser.add_argument('--population',type=int, default=100, help='population')

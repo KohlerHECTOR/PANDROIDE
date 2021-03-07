@@ -97,41 +97,35 @@ class Simu:
     def train(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
         if is_cem == True:
             #random init of the neural network.
-            init_weights = params.sigma*np.random.randn(policy.get_weights_dim(False))
-            policy.set_weights(init_weights, False)
-            #make data files to plot the sum of reward at each episode.
-            #path = os.getcwd() + "/data/save"
+            #so far, all the layers are initialized with the same gaussian.
+            init_weights = np.array(params.sigma*np.random.randn(params.population,policy.get_weights_dim(False)))
+            policy.set_weights(init_weights[0,:], False)
             study = params.study_name
-            #total_reward_file = open(path + "/total_reward_" + study + '_' + params.env_name + '.txt', 'w')
-            #duration_file = open(path + "/duration_cem_" + params.study_name + '_' + params.env_name + '.txt', 'w')
-            #We learn all the weights of the neural network
-            best_weights=init_weights[-policy.get_weights_dim(params.fix_layers):]
+            var=np.cov(init_weights[:,-policy.get_weights_dim(params.fix_layers):],rowvar=False)
+            mu=init_weights[:,-policy.get_weights_dim(params.fix_layers):].mean(axis=0)
+            rng = np.random.default_rng()
+
+            #we can draw the last layer from a different gaussian
+            #mu=params.sigma_bis*np.random.randn(policy.get_weights_dim(params.fix_layers))
         for cycle in range(params.nb_cycles):
             if is_cem == True:
-                # batches = np.zeros(params.population)
-                #batch2 = []
                 rewards = np.zeros(params.population)
-                weights = np.zeros((params.population,policy.get_weights_dim(params.fix_layers)))
-
+                weights=rng.multivariate_normal(mu, var, params.population)
                 for p in range(params.population):
-                    weights[p]=best_weights + (params.sigma*np.random.randn(policy.get_weights_dim(params.fix_layers)))
                     policy.set_weights(weights[p], params.fix_layers)
                     batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
-                    #batch2.append(self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True))
-                    #algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
-                    #algo.prepare_batch(batches[p])
-                    # Update the policy
                     rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
-                    #plot_trajectory(batch2[p], self.env, cycle+1)
 
                 elites_nb = int(params.elites_frac * params.population)
                 elites_idxs = rewards.argsort()[-elites_nb:]
                 elites_weights = [weights[i] for i in elites_idxs]
                 #update the best weights
-                best_weights = np.array(elites_weights).mean(axis=0)
-                print(best_weights)
+                mu = np.array(elites_weights).mean(axis=0)
+                var = np.cov(elites_weights,rowvar=False)
+
+                #print(best_weights)
                 # policy evaluation part
-                policy.set_weights(best_weights, params.fix_layers)
+                policy.set_weights(mu, params.fix_layers)
 
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
 
