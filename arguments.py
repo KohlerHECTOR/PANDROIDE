@@ -49,7 +49,7 @@ def get_args():
     # algo settings
     parser.add_argument('--gradients', type=str, nargs='+', default=['sum', 'discount', 'normalize'], help='other: baseline, beta')
     parser.add_argument('--critic_estim_method', type=str, default="td", help='critic estimation method: mc, td or nstep')
-    parser.add_argument('--fix_layers', type=str, default="False", help='only for normal')
+    parser.add_argument('--fix_layers', type=str, default=False, help='only for normal')
     # learning parameters
 
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
@@ -64,7 +64,7 @@ def get_args():
     parser.add_argument('--sigma', type=float, default=1.0, help='noise')
     parser.add_argument('--sigma_bis', type=float, default=1.0, help='noise of initial last  layer')
     parser.add_argument('--elites_frac',type=float, default=0.2, help='proportion of the population to keep at each iter')
-    parser.add_argument('--bests_frac',type=float, default=0.25, help='proportion of the population to keep at each iter')
+    parser.add_argument('--bests_frac',type=float, default=1, help='proportion of the population to keep at each iter')
     parser.add_argument('--population',type=int, default=100, help='population')
 
     # plots settings

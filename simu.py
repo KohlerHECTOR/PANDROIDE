@@ -99,10 +99,17 @@ class Simu:
             #random init of the neural network.
             #so far, all the layers are initialized with the same gaussian.
             init_weights = np.array(params.sigma*np.random.randn(params.population,policy.get_weights_dim(False)))
+            #print(np.shape(init_weights))
             policy.set_weights(init_weights[0,:], False)
+            fixed=params.fix_layers
+            print(fixed)
+            #print(params.fix_layers)
+            #print(policy.get_weights_dim(params.fix_layers))
             study = params.study_name
-            var=np.cov(init_weights[:,-policy.get_weights_dim(params.fix_layers):],rowvar=False)
-            mu=init_weights[:,-policy.get_weights_dim(params.fix_layers):].mean(axis=0)
+            noise=np.diag(np.ones(policy.get_weights_dim(fixed))*params.sigma)
+            #print(np.shape(noise))
+            var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
+            mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
             rng = np.random.default_rng()
 
             #we can draw the last layer from a different gaussian
@@ -112,7 +119,7 @@ class Simu:
                 rewards = np.zeros(params.population)
                 weights=rng.multivariate_normal(mu, var, params.population)
                 for p in range(params.population):
-                    policy.set_weights(weights[p], params.fix_layers)
+                    policy.set_weights(weights[p], fixed)
                     batch=self.make_monte_carlo_batch(params.nb_trajs_cem, params.render, policy, True)
                     rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
 
@@ -121,11 +128,11 @@ class Simu:
                 elites_weights = [weights[i] for i in elites_idxs]
                 #update the best weights
                 mu = np.array(elites_weights).mean(axis=0)
-                var = np.cov(elites_weights,rowvar=False)
+                var = np.cov(elites_weights,rowvar=False)+noise
 
                 #print(best_weights)
                 # policy evaluation part
-                policy.set_weights(mu, params.fix_layers)
+                policy.set_weights(mu, fixed)
 
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
 
