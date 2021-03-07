@@ -95,9 +95,7 @@ class Simu:
                 return total_reward
 
     def train(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
-        nb_trajs = params.nb_trajs_pg
         if is_cem == True:
-            nb_trajs = params.nb_trajs_cem
             #random init of the neural network.
             #so far, all the layers are initialized with the same gaussian.
             init_weights = np.array(params.sigma*np.random.randn(params.population,policy.get_weights_dim(False)))
@@ -115,7 +113,7 @@ class Simu:
                 weights=rng.multivariate_normal(mu, var, params.population)
                 for p in range(params.population):
                     policy.set_weights(weights[p], params.fix_layers)
-                    batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
+                    batch=self.make_monte_carlo_batch(params.nb_trajs_cem, params.render, policy, True)
                     rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
 
                 elites_nb = int(params.elites_frac * params.population)
@@ -136,7 +134,7 @@ class Simu:
                 reward_file.write(str(cycle) + " " + str(total_reward) + "\n")
 
             elif is_cem == False:
-                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+                batch = self.make_monte_carlo_batch(params.nb_trajs_pg, params.render, policy)
 
                 # Update the policy
                 batch2 = batch.copy_batch()
