@@ -74,7 +74,7 @@ if __name__ == '__main__':
     create_data_folders()
     study_cem(args)
     #exploit_reward_full_cem(args)
-    exploit_duration_full_cem(args)
+    #exploit_duration_full_cem(args)
     exploit_total_reward_cem(args)
     #To make plot to compare pg and cem
     #exploit_duration_full_cem_vs_pg(args, study, env)

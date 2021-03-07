@@ -95,7 +95,9 @@ class Simu:
                 return total_reward
 
     def train(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
+        nb_trajs = params.nb_trajs_pg
         if is_cem == True:
+            nb_trajs = params.nb_trajs_cem
             #random init of the neural network.
             #so far, all the layers are initialized with the same gaussian.
             init_weights = np.array(params.sigma*np.random.randn(params.population,policy.get_weights_dim(False)))

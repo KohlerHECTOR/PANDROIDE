@@ -151,7 +151,7 @@ if __name__ == '__main__':
         cem_time = study_cem(args)
         exploit_total_reward_cem(args)
         cem_fixed_time = study_cem_fixed(args)
-        exploit_total_reward_cem(args, True)
+        exploit_total_reward_cem(args)
         pg_time = study_pg(args)
         exploit_reward_full(args)
         print("\n")
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     elif args.plot_mode == "cem_fixed":
         create_data_folders()
         cem_fixed_time = study_cem_fixed(args)
-        exploit_total_reward_cem(args, True)
+        exploit_total_reward_cem(args)
         print("\n")
         print("====================TIME===================")
         print("Time cem_fixed : " + cem_fixed_time)

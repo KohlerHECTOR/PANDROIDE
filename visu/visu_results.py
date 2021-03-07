@@ -117,7 +117,11 @@ def exploit_reward_full_cem(params) -> None:
     #for i in range(1):
     plot_data(path + "/reward_" + "cem" + '_' + params.env_name + '.txt', "reward " + "cem")
 
-def exploit_total_reward_cem(params, fixed=False) -> None:
+def exploit_total_reward_cem(params) -> None:
+    if params.fix_layers:
+        fixed = True
+    else:
+        fixed = False
     path = os.getcwd() + "/data/save"
     study = params.gradients
     #for i in range(1):
