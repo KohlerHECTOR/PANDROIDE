@@ -43,11 +43,11 @@ def get_args():
     parser.add_argument('--nb_repet', type=int, default=10, help='number of repetitions to get statistics')
     parser.add_argument('--nb_cycles', type=int, default=40, help='number of training cycles')
     parser.add_argument('--nb_trajs', type=int, default=20, help='number of trajectories in a MC batch')
-    parser.add_argument('--nb_trajs_cem', type=int, default=20, help='number of trajectories in a MC batch for cem')
+    parser.add_argument('--nb_trajs_cem', type=int, default=1, help='number of trajectories in a MC batch for cem')
     parser.add_argument('--nb_trajs_pg', type=int, default=20, help='number of trajectories in a MC batch for pg')
     parser.add_argument('--nb_batches', type=int, default=20, help='number of updates of the network using datasets')
     # algo settings
-    parser.add_argument('--gradients', type=str, nargs='+', default=['sum', 'discount', 'normalize'], help='other: baseline, beta')
+    parser.add_argument('--gradients', type=str, nargs='+', default=['sum'], help='other: baseline, beta')
     parser.add_argument('--critic_estim_method', type=str, default="td", help='critic estimation method: mc, td or nstep')
     parser.add_argument('--fix_layers', type=str, default=False, help='only for normal')
     # learning parameters
