@@ -103,10 +103,10 @@ class Simu:
             #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
             policy.set_weights(init_weights, False)
             #For saving top 10 policies obtained
-            self.evaluate_episode(policy, params.deterministic_eval)
-            top_ten_policies= [init_weights for i in range(10)]
-            score=self.evaluate_episode(policy, params.deterministic_eval)
-            top_ten_scores=[score for i in range(10)]
+            # self.evaluate_episode(policy, params.deterministic_eval)
+            # top_ten_policies= [init_weights for i in range(10)]
+            # score=self.evaluate_episode(policy, params.deterministic_eval)
+            # top_ten_scores=[score for i in range(10)]
             print(np.shape(top_ten_policies))
             print(np.shape(top_ten_scores))
 
@@ -150,10 +150,10 @@ class Simu:
                 policy.set_weights(mu, fixed)
 
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
-                if total_reward>np.min(top_ten_scores):
-                    temp_min=np.argmin(top_ten_scores)
-                    top_ten_scores[temp_min]=total_reward
-                    top_ten_policies[temp_min]=mu
+                # if total_reward>np.min(top_ten_scores):
+                #     temp_min=np.argmin(top_ten_scores)
+                #     top_ten_scores[temp_min]=total_reward
+                #     top_ten_policies[temp_min]=mu
 
                 # Update the file for the plot
                 reward_file = policy_loss_file
@@ -191,11 +191,11 @@ class Simu:
             #     pw.save(self.best_reward)
 
         #For saving the top 10 policies
-        for i in range(len(top_ten_policies)):
-            print('saved ' + str(i+1) + ' policies')
-            policy.set_weights(top_ten_policies[i],fixed)
-            print(top_ten_scores)
-            pw.save(top_ten_scores[i])
+        # for i in range(len(top_ten_policies)):
+        #     print('saved ' + str(i+1) + ' policies')
+        #     policy.set_weights(top_ten_policies[i],fixed)
+        #     print(top_ten_scores)
+        #     pw.save(top_ten_scores[i])
 
     def train_on_one_episode(self, policy, deterministic, render=False):
         """
