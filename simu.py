@@ -94,13 +94,24 @@ class Simu:
             if done:
                 return total_reward
 
-    def train(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
+    def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
         if is_cem == True:
             #random init of the neural network.
             #so far, all the layers are initialized with the same gaussian.
-            init_weights = np.array(params.sigma*np.random.randn(params.population,policy.get_weights_dim(False)))
+            init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
             #print(np.shape(init_weights))
-            policy.set_weights(init_weights[0,:], False)
+            #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
+            policy.set_weights(init_weights, False)
+            #For saving top 10 policies obtained
+            self.evaluate_episode(policy, params.deterministic_eval)
+            top_ten_policies= [init_weights for i in range(10)]
+            score=self.evaluate_episode(policy, params.deterministic_eval)
+            top_ten_scores=[score for i in range(10)]
+            print(np.shape(top_ten_policies))
+            print(np.shape(top_ten_scores))
+
+
+            #policy.set_weights(init_weights[0,:], False)
             fixed=params.fix_layers
             print(fixed)
             #print(params.fix_layers)
@@ -108,8 +119,12 @@ class Simu:
             study = params.study_name
             noise=np.diag(np.ones(policy.get_weights_dim(fixed))*params.sigma)
             #print(np.shape(noise))
-            var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
-            mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
+            #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
+            #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
+            var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
+            print(np.shape(var))
+            mu=init_weights[-policy.get_weights_dim(fixed):]
+            print(np.shape(mu))
             rng = np.random.default_rng()
 
             #we can draw the last layer from a different gaussian
@@ -135,6 +150,10 @@ class Simu:
                 policy.set_weights(mu, fixed)
 
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
+                if total_reward>np.min(top_ten_scores):
+                    temp_min=np.argmin(top_ten_scores)
+                    top_ten_scores[temp_min]=total_reward
+                    top_ten_policies[temp_min]=mu
 
                 # Update the file for the plot
                 reward_file = policy_loss_file
@@ -167,9 +186,16 @@ class Simu:
 
             # save best reward agent (no need for averaging if the policy is deterministic)
             #print(#self.best_reward)
-            if self.best_reward < total_reward:
-                self.best_reward = total_reward
-                pw.save(self.best_reward)
+            # if self.best_reward < total_reward:
+            #     self.best_reward = total_reward
+            #     pw.save(self.best_reward)
+
+        #For saving the top 10 policies
+        for i in range(len(top_ten_policies)):
+            print('saved ' + str(i+1) + ' policies')
+            policy.set_weights(top_ten_policies[i],fixed)
+            print(top_ten_scores)
+            pw.save(top_ten_scores[i])
 
     def train_on_one_episode(self, policy, deterministic, render=False):
         """

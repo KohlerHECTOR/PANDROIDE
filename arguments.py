@@ -43,7 +43,7 @@ def get_args():
     parser.add_argument('--nb_repet', type=int, default=10, help='number of repetitions to get statistics')
     parser.add_argument('--nb_cycles', type=int, default=40, help='number of training cycles')
     parser.add_argument('--nb_trajs', type=int, default=20, help='number of trajectories in a MC batch')
-    parser.add_argument('--nb_trajs_cem', type=int, default=1, help='number of trajectories in a MC batch for cem')
+    parser.add_argument('--nb_trajs_cem', type=int, default=5, help='number of trajectories in a MC batch for cem')
     parser.add_argument('--nb_trajs_pg', type=int, default=20, help='number of trajectories in a MC batch for pg')
     parser.add_argument('--nb_batches', type=int, default=20, help='number of updates of the network using datasets')
     # algo settings
@@ -53,7 +53,7 @@ def get_args():
     # learning parameters
 
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
-    parser.add_argument('--lr_actor', type=float, default=0.01, help='learning rate of the actor')
+    parser.add_argument('--lr_actor', type=float, default=0.0001, help='learning rate of the actor')
     parser.add_argument('--lr_critic', type=float, default=0.01, help='learning rate of the critic')
     parser.add_argument('--beta', type=float, default=0.1, help='temperature in AWR-like learning')
     parser.add_argument('--nstep', type=int, default=5, help='n in n-step return')

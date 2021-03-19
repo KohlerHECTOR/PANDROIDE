@@ -46,12 +46,13 @@ class Evaluator:
     def load_policies(self, folder) -> None:
         """
          :param: folder : name of the folder containing policies
-         Output : none (policies of the folder stored in self.env_dict)        
+         Output : none (policies of the folder stored in self.env_dict)
          """
         listdir = os.listdir(folder)
         for policy_file in listdir:
             print(policy_file)
-            pw = PolicyWrapper(GenericNet(), "", "", "", 0)
+            print('ok')
+            pw = PolicyWrapper(GenericNet(), "", "", 10,"", 0)
             policy = pw.load(folder + policy_file)
             if pw.env_name in self.env_dict:
                 env = make_env(pw.env_name, pw.policy_type, pw.max_steps)

@@ -13,6 +13,9 @@ from visu.visu_results import exploit_total_reward_cem_vs_pg
 from visu.visu_weights import plot_normal_histograms
 from numpy.random import random
 import gym
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 
 def create_data_folders() -> None:
@@ -78,7 +81,7 @@ def study_cem(params) -> None:
         simu.env.reinit()
         if params.policy_type=="normal":
             policy = NormalPolicy(simu.obs_size, 24, 36, 1)
-        pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+        pw = PolicyWrapper(policy, params.policy_type, simu.env_name, j,params.team_name, params.max_episode_steps)
         simu.train(pw, params, policy, False, reward_file, "", study[0], 0, True)
     cem_time = chrono_cem.stop()
     return cem_time
@@ -108,7 +111,7 @@ def study_cem_fixed(params) -> None:
         if params.policy_type=="normal":
             policy = NormalPolicy(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-        simu.train(pw, params, policy, False, reward_file, "", study[0], 0, True)
+        simu.train(pw,params, policy, False, reward_file, "", study[0], 0, True)
     cem_fixed_time = chrono_cem_fixed.stop()
     return cem_fixed_time
 
@@ -139,7 +142,7 @@ def study_pg(params) -> None:
             policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
         critic = VNetwork(simu.obs_size, 24, 36, 1, params.lr_critic)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-        simu.train(pw, params, policy, critic, policy_loss_file, critic_loss_file, study[0])
+        simu.train(pw,params, policy, critic, policy_loss_file, critic_loss_file, study[0])
     pg_time = chrono_pg.stop()
     return pg_time
 
@@ -147,6 +150,18 @@ if __name__ == '__main__':
     args = get_args()
     print(args)
     if args.plot_mode == "all":
+        #init dummy policy and dummy simulati
+        # simu = make_simu_from_params(args)
+        # policy=NormalPolicy(simu.obs_size, 24, 36, 1)
+        # starting_weights=np.array(3*np.random.randn(args.nb_repet,policy.get_weights_dim(False)))
+        # X_embedded = TSNE(n_components=2).fit_transform(starting_weights)
+        # print(np.shape(X_embedded))
+        # print(X_embedded)
+        # plt.scatter(*zip(*X_embedded))
+        # plt.show()
+        #
+        # policy=None
+        # simu=None
         create_data_folders()
         cem_time = study_cem(args)
         exploit_total_reward_cem(args)
@@ -189,7 +204,7 @@ if __name__ == '__main__':
         print("====================TIME===================")
         print("Time pg : " + pg_time)
         print("===========================================")
-        print("\n") 
+        print("\n")
     elif args.plot_mode == "plot_only":
         #To make plot to compare pg and cem
         exploit_total_reward_cem_vs_pg(args)

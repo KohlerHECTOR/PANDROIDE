@@ -3,17 +3,18 @@ import os
 
 class PolicyWrapper:
     """
-    This class is used to perform evaluation of a policy without any assumption on the nature of the policy. 
+    This class is used to perform evaluation of a policy without any assumption on the nature of the policy.
     It contains the information about the training environment and the team name
-    which are necessary to display the result of evaluations. 
+    which are necessary to display the result of evaluations.
     These two informations are stored into the file name when saving the policy to be evaluated.
     """
-    def __init__(self, policy, policy_type, env_name, team_name, max_steps):
+    def __init__(self, policy, policy_type, env_name, count_tens,team_name, max_steps):
         self.policy = policy
         self.policy_type = policy_type
         self.env_name = env_name
         self.team_name = team_name
         self.max_steps = max_steps
+        self.count=1+(10*count_tens)
 
     def save(self, score=0) -> None:
         """
@@ -21,10 +22,12 @@ class PolicyWrapper:
         :param score: the score of the network
         :return: nothing
         """
+
         directory = os.getcwd() + '/data/policies/'
-        filename = directory + self.env_name + '#' + self.team_name + '_' + str(score) \
+        filename = directory + self.env_name + '#' + str(self.count)+'#' +self.team_name + '_' + str(score) \
                    + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(score) + '.pt'
         self.policy.save_model(filename)
+        self.count+=1
 
     def load(self, filename):
         """
@@ -36,11 +39,11 @@ class PolicyWrapper:
         tmp = fields[0]
         env_name = tmp.split('/')
         self.env_name = env_name[-1]
-        self.team_name = fields[1]
-        self.policy_type = fields[2]
+        self.team_name = fields[2]
+        self.policy_type = fields[3]
         #### MODIF : check if max steps is None
-        if fields[3] != "None":
-            self.max_steps = int(fields[3])
+        if fields[4] != "None":
+            self.max_steps = int(fields[4])
         else:
             self.max_steps = None
         ####
