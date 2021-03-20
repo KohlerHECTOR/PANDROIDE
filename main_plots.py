@@ -64,6 +64,9 @@ def study_cem(params) -> None:
     :return: nothing
     """
 
+    # set the type of study
+    params.gradients = ['sum']
+
     assert params.policy_type in ['normal'], 'unsupported policy type'
     # cuda = torch.device('cuda')
     study = params.gradients
@@ -92,6 +95,9 @@ def study_cem_fixed(params) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
+
+    # set the type of study
+    params.gradients = ['sum']
 
     assert params.policy_type in ['normal'], 'unsupported policy type'
     # cuda = torch.device('cuda')
@@ -122,6 +128,9 @@ def study_pg(params) -> None:
     :return: nothing
     """
 
+    # set the type of study
+    params.gradients = ['sum']
+
     assert params.policy_type in ['normal'], 'unsupported policy type'
     # cuda = torch.device('cuda')
     study = params.gradients
@@ -146,6 +155,40 @@ def study_pg(params) -> None:
     pg_time = chrono_pg.stop()
     return pg_time
 
+def study_pg_fixed(params) -> None:
+    """
+    Start a sum study of pg
+    :param params: the parameters of the study
+    :return: nothing
+    """
+
+    # set the type of study
+    params.gradients = ['sum']
+
+    assert params.policy_type in ['normal'], 'unsupported policy type'
+    # cuda = torch.device('cuda')
+    study = params.gradients
+    simu = make_simu_from_params(params)
+    simu.env.set_file_name(study[0] + '_' + simu.env_name)
+    print("study : ", study)
+
+    # fixed layers
+    params.fix_layers = True
+
+    print("pg study") # pg study
+    chrono_pg_fixed = Chrono()
+    simu.env.set_file_name(study[0] + '_' + simu.env_name)
+    policy_loss_file, critic_loss_file = set_files_pg(study[0], simu.env_name)
+    for j in range(params.nb_repet):
+        simu.env.reinit()
+        if params.policy_type == "normal":
+            policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+        critic = VNetwork(simu.obs_size, 24, 36, 1, params.lr_critic)
+        pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+        simu.train(pw,params, policy, critic, policy_loss_file, critic_loss_file, study[0])
+    pg_time_fixed = chrono_pg_fixed.stop()
+    return pg_time_fixed
+
 if __name__ == '__main__':
     args = get_args()
     print(args)
@@ -169,11 +212,14 @@ if __name__ == '__main__':
         exploit_total_reward_cem(args)
         pg_time = study_pg(args)
         exploit_reward_full(args)
+        pg_time_fixed = study_pg_fixed(args)
+        exploit_reward_full(args)
         print("\n")
         print("====================TIME===================")
         print("Time cem : " + cem_time)
         print("Time cem_fixed : " + cem_fixed_time)
         print("Time pg : " + pg_time)
+        print("Time pg_fixed : " + pg_time_fixed)
         print("===========================================")
         print("\n")
         #To make plot to compare pg and cem
@@ -203,6 +249,15 @@ if __name__ == '__main__':
         print("\n")
         print("====================TIME===================")
         print("Time pg : " + pg_time)
+        print("===========================================")
+        print("\n")
+    elif args.plot_mode == "pg_fixed":
+        create_data_folders()
+        pg_time_fixed = study_pg_fixed(args)
+        exploit_reward_full(args)
+        print("\n")
+        print("====================TIME===================")
+        print("Time pg_fixed : " + pg_time_fixed)
         print("===========================================")
         print("\n")
     elif args.plot_mode == "plot_only":

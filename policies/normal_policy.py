@@ -24,7 +24,26 @@ class NormalPolicy(GenericNet):
         self.h2_size = l3
         self.fc_mu_size = l4
         self.fc_std_size = l4
-    
+
+    def set_weights_pg(self, fc1_w, fc1_b, fc2_w, fc2_b): #reset the weights after backpropagation
+        # set the weights for each layer
+        self.fc1.weight.data.copy_(fc1_w.view_as(self.fc1.weight.data))
+        self.fc1.bias.data.copy_(fc1_b.view_as(self.fc1.bias.data))
+        self.fc2.weight.data.copy_(fc2_w.view_as(self.fc2.weight.data))
+        self.fc2.bias.data.copy_(fc2_b.view_as(self.fc2.bias.data))
+
+    def get_weights_pg(self): #get the weights of every layers except the last one
+        # get the weights for each layer
+        fc1_w = self.fc1.weight.data.clone().detach()
+        fc1_b = self.fc1.bias.data.clone().detach()
+        fc2_w = self.fc2.weight.data.clone().detach()
+        fc2_b = self.fc2.bias.data.clone().detach()
+        #fc_mu_w = self.fc_mu.weight.data
+        #fc_mu_b = self.fc_mu.bias.data
+        #fc_std_w = self.fc_std.weight.data
+        #fc_std_b = self.fc_std.bias.data
+        return fc1_w, fc1_b, fc2_w, fc2_b
+
     def set_weights(self, weights, fix_layers):
         if fix_layers: # last layers weights
             h2_size = self.h2_size
@@ -89,6 +108,7 @@ class NormalPolicy(GenericNet):
          :param state: the input state(s)
          :return: the resulting pytorch tensor (here the max and standard deviation of a Gaussian probability of action)
          """
+        
         state = torch.from_numpy(state).float()
         state = self.relu(self.fc1(state))
         state = self.relu(self.fc2(state))

@@ -61,15 +61,16 @@ def exploit_duration_full_cem_vs_pg(params, env, study) -> None:
 
 def exploit_total_reward_cem_vs_pg(params) -> None:
     path = os.getcwd() + "/data/save"
-    plot_data(path + "/reward_" + "pg" + '_' + params.env_name + '.txt', "reward " + "pg")
-    plot_data(path + "/reward_" + "cem" + '_' + params.env_name + '.txt', "reward " + "cem")
-    plot_data(path + "/reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt', "reward_fixed_layers " + "cem")
+    plot_data(path + "/saved_reward_" + "pg" + '_' + params.env_name + '.txt', "pg")
+    plot_data(path + "/saved_reward_fixed_layers_" + "pg" + '_' + params.env_name + '.txt', "pg fixed")
+    plot_data(path + "/saved_reward_" + "cem" + '_' + params.env_name + '.txt', "cem")
+    plot_data(path + "/saved_reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt', "cem fixed")
 
     plt.xlabel("Episodes")
     plt.ylabel("Rewards")
     plt.legend(loc="lower right")
     plt.title(params.env_name + " " + params.policy_type)
-    plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'pgvscemvscemfixed.pdf')
+    plt.savefig(path + '/../results/durations_' + make_full_string(params) + 'pgvspgfixedvscemvscemfixed.pdf')
     plt.show()
 
 def exploit_duration_full_cem(params) -> None:
@@ -99,11 +100,20 @@ def exploit_duration_full(params) -> None:
     fig = plt.show()
 
 def exploit_reward_full(params) -> None:
+    if params.fix_layers:
+        fixed = True
+    else:
+        fixed = False
     path = os.getcwd() + "/data/save"
     study = params.gradients
-    shutil.copy(path + "/reward_" + "sum" + '_' + params.env_name + '.txt', path + "/reward_" + "pg" + '_' + params.env_name + '.txt')
-    for i in range(len(study)):
-        plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "pg", params.night_mode)
+    if fixed:
+        for i in range(len(study)):
+            plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "pg fixed", params.night_mode)
+            shutil.copy(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', path + "/saved_reward_fixed_layers_" + "pg" + '_' + params.env_name + '.txt')
+    else:
+        for i in range(len(study)):
+            plot_data(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', "pg", params.night_mode)
+            shutil.copy(path + "/reward_" + study[i] + '_' + params.env_name + '.txt', path + "/saved_reward_" + "pg" + '_' + params.env_name + '.txt')
     if not(params.night_mode):
         plt.xlabel("Episodes")
         plt.ylabel("Rewards")
@@ -127,10 +137,10 @@ def exploit_total_reward_cem(params) -> None:
     #for i in range(1):
     if fixed:
         plot_data(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', "cem fixed", params.night_mode)
-        shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt')
+        shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/saved_reward_fixed_layers_" + "cem" + '_' + params.env_name + '.txt')
     else:
         plot_data(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', "cem", params.night_mode)
-        shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/reward_" + "cem" + '_' + params.env_name + '.txt')
+        shutil.copy(path + "/total_reward_" + "cem" + '_' + params.env_name + '.txt', path + "/saved_reward_" + "cem" + '_' + params.env_name + '.txt')
     if not(params.night_mode):
         plt.title(params.env_name + " " + params.policy_type)
         plt.xlabel("Episodes")

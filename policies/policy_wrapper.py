@@ -8,7 +8,7 @@ class PolicyWrapper:
     which are necessary to display the result of evaluations.
     These two informations are stored into the file name when saving the policy to be evaluated.
     """
-    def __init__(self, policy, policy_type, env_name, count_tens,team_name, max_steps):
+    def __init__(self, policy, policy_type, env_name, team_name, max_steps, count_tens=1):
         self.policy = policy
         self.policy_type = policy_type
         self.env_name = env_name

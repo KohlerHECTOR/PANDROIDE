@@ -4,7 +4,6 @@ from batch import Episode, Batch
 from environment import make_env
 from algo import Algo
 from visu.visu_trajectories import plot_trajectory
-from visu.visu_weights import plot_weight_histograms, plot_normal_histograms
 import math
 import os
 
@@ -107,8 +106,8 @@ class Simu:
             # top_ten_policies= [init_weights for i in range(10)]
             # score=self.evaluate_episode(policy, params.deterministic_eval)
             # top_ten_scores=[score for i in range(10)]
-            print(np.shape(top_ten_policies))
-            print(np.shape(top_ten_scores))
+            # print(np.shape(top_ten_policies))
+            # print(np.shape(top_ten_scores))
 
 
             #policy.set_weights(init_weights[0,:], False)
@@ -122,13 +121,19 @@ class Simu:
             #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
             #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
             var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
-            print(np.shape(var))
+            # print(np.shape(var))
             mu=init_weights[-policy.get_weights_dim(fixed):]
-            print(np.shape(mu))
+            # print(np.shape(mu))
             rng = np.random.default_rng()
 
             #we can draw the last layer from a different gaussian
             #mu=params.sigma_bis*np.random.randn(policy.get_weights_dim(params.fix_layers))
+        if is_cem == False:
+            fixed=params.fix_layers
+            print(fixed)
+            if fixed:
+                fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
+        
         for cycle in range(params.nb_cycles):
             if is_cem == True:
                 rewards = np.zeros(params.population)
@@ -161,7 +166,7 @@ class Simu:
 
             elif is_cem == False:
                 batch = self.make_monte_carlo_batch(params.nb_trajs_pg, params.render, policy)
-
+                
                 # Update the policy
                 batch2 = batch.copy_batch()
                 algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
@@ -178,8 +183,9 @@ class Simu:
                 critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
                 policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
                 plot_trajectory(batch2, self.env, cycle+1)
-
                 # policy evaluation part
+                if fixed:
+                    policy.set_weights_pg(fc1_w, fc1_b, fc2_w, fc2_b)
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
             print(total_reward)
 
