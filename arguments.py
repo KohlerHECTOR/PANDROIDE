@@ -36,11 +36,11 @@ def get_args():
     # study settings
     parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem')
     parser.add_argument('--critic_update_method', type=str, default="dataset", help='critic update method: batch or dataset')
-    parser.add_argument('--policy_type', type=str, default="bernoulli", help='policy type: bernoulli, normal, squashedGaussian, discrete')
+    parser.add_argument('--policy_type', type=str, default="normal", help='policy type: bernoulli, normal, squashedGaussian, discrete')
     parser.add_argument('--team_name', type=str, default='default_team', help='team name')
     parser.add_argument('--deterministic_eval', type=bool, default=True, help='deterministic policy evaluation?') # Only False when not used
     # study parameters
-    parser.add_argument('--nb_repet', type=int, default=10, help='number of repetitions to get statistics')
+    parser.add_argument('--nb_repet', type=int, default=1, help='number of repetitions to get statistics')
     parser.add_argument('--nb_cycles', type=int, default=40, help='number of training cycles')
     parser.add_argument('--nb_trajs', type=int, default=20, help='number of trajectories in a MC batch')
     parser.add_argument('--nb_trajs_cem', type=int, default=5, help='number of trajectories in a MC batch for cem')
@@ -60,12 +60,11 @@ def get_args():
     parser.add_argument('--batch_size', type=int, default=64, help='size of a minibatch')
     parser.add_argument('--nb_workers', type=int, default=2, help='number of cpus to collect samples')
     parser.add_argument('--shuffle', type=bool, default=True, help='shuffle replay samples or not') # Only False when not used
-    parser.add_argument('--max_episode_steps', type=int, default=None, help='duration of an episode (step limit)')
+    parser.add_argument('--max_episode_steps', type=int, default=200, help='duration of an episode (step limit)')
     parser.add_argument('--sigma', type=float, default=1.0, help='noise')
-    parser.add_argument('--sigma_bis', type=float, default=1.0, help='noise of initial last  layer')
     parser.add_argument('--elites_frac',type=float, default=0.2, help='proportion of the population to keep at each iter')
     parser.add_argument('--bests_frac',type=float, default=1, help='proportion of the population to keep at each iter')
-    parser.add_argument('--population',type=int, default=100, help='population')
+    parser.add_argument('--population',type=int, default=15, help='population')
 
     # plots settings
     parser.add_argument('--night_mode',type=bool, default=False, help='dont show the plots')
