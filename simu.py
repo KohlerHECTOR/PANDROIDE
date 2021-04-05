@@ -117,6 +117,9 @@ class Simu:
             if fixed:
                 print(fixed)
                 fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
+                # print(fc1_w)
+                # print(policy.test())
+
         if is_cem == True:
             all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(fixed)))
             best_weights=np.zeros(policy.get_weights_dim(fixed))
