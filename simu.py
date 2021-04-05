@@ -96,29 +96,37 @@ class Simu:
             if done:
                 return total_reward
 
+                #For saving top 10 policies obtained
+                # self.evaluate_episode(policy, params.deterministic_eval)
+                # top_ten_policies= [init_weights for i in range(10)]
+                # score=self.evaluate_episode(policy, params.deterministic_eval)
+                # top_ten_scores=[score for i in range(10)]
+                # print(np.shape(top_ten_policies))
+                # print(np.shape(top_ten_scores))
+
+
+                #policy.set_weights(init_weights[0,:], False)
+
     def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
         all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         all_rewards=np.zeros(params.nb_cycles)
-        best_reward=-2000
+        best_reward=-np.inf
         best_weights=np.zeros(policy.get_weights_dim(False))
+        fixed=params.fix_layers
+        if is_cem == False:
+            if fixed:
+                print(fixed)
+                fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
         if is_cem == True:
+            all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(fixed)))
+            best_weights=np.zeros(policy.get_weights_dim(fixed))
             #random init of the neural network.
             #so far, all the layers are initialized with the same gaussian.
             init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
             #print(np.shape(init_weights))
             #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
             policy.set_weights(init_weights, False)
-            #For saving top 10 policies obtained
-            # self.evaluate_episode(policy, params.deterministic_eval)
-            # top_ten_policies= [init_weights for i in range(10)]
-            # score=self.evaluate_episode(policy, params.deterministic_eval)
-            # top_ten_scores=[score for i in range(10)]
-            # print(np.shape(top_ten_policies))
-            # print(np.shape(top_ten_scores))
 
-
-            #policy.set_weights(init_weights[0,:], False)
-            fixed=params.fix_layers
             print(fixed)
             #print(params.fix_layers)
             #print(policy.get_weights_dim(params.fix_layers))
@@ -127,12 +135,7 @@ class Simu:
             #print(np.shape(noise))
             #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
             #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
-            if is_cem == False:
-            	fixed=params.fix_layers
-            	print(fixed)
-            	if fixed:
-                	fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
-        
+
             var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
             print(np.shape(var))
             mu=init_weights[-policy.get_weights_dim(fixed):]
