@@ -193,18 +193,6 @@ if __name__ == '__main__':
     args = get_args()
     print(args)
     if args.plot_mode == "all":
-        #init dummy policy and dummy simulati
-        # simu = make_simu_from_params(args)
-        # policy=NormalPolicy(simu.obs_size, 24, 36, 1)
-        # starting_weights=np.array(3*np.random.randn(args.nb_repet,policy.get_weights_dim(False)))
-        # X_embedded = TSNE(n_components=2).fit_transform(starting_weights)
-        # print(np.shape(X_embedded))
-        # print(X_embedded)
-        # plt.scatter(*zip(*X_embedded))
-        # plt.show()
-        #
-        # policy=None
-        # simu=None
         create_data_folders()
         cem_time = study_cem(args)
         exploit_total_reward_cem(args)
