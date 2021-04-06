@@ -217,7 +217,7 @@ class Simu:
                     best_weights=policy.get_weights_as_numpy()
                     best_reward=total_reward
                     idx_best=cycle
-            #print(total_reward)
+            print(total_reward)
         # X_embedded = TSNE(n_components=2).fit_transform(all_cem_weights)
         # # print(np.shape(X_embedded))
         # # print(X_embedded)
