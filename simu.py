@@ -113,6 +113,7 @@ class Simu:
         best_reward=-np.inf
         best_weights=np.zeros(policy.get_weights_dim(False))
         fixed=params.fix_layers
+        idx_best=0
         if is_cem == False:
             if fixed:
                 print(fixed)
@@ -215,12 +216,13 @@ class Simu:
                 if total_reward>best_reward:
                     best_weights=policy.get_weights_as_numpy()
                     best_reward=total_reward
-            print(total_reward)
+                    idx_best=cycle
+            #print(total_reward)
         # X_embedded = TSNE(n_components=2).fit_transform(all_cem_weights)
         # # print(np.shape(X_embedded))
         # # print(X_embedded)
         # plt.scatter(*zip(*X_embedded))
-        return all_weights,best_weights,all_rewards
+        return all_weights,best_weights,all_rewards,idx_best
 
 
 
