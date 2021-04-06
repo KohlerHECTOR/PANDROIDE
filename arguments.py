@@ -52,7 +52,7 @@ def get_args():
     parser.add_argument('--fix_layers', type=str, default=False, help='only for normal')
     # learning parameters
 
-    parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
+    parser.add_argument('--gamma', type=float, default=1, help='discount factor')
     parser.add_argument('--lr_actor', type=float, default=0.0001, help='learning rate of the actor')
     parser.add_argument('--lr_critic', type=float, default=0.01, help='learning rate of the critic')
     parser.add_argument('--beta', type=float, default=0.1, help='temperature in AWR-like learning')
@@ -69,6 +69,35 @@ def get_args():
     # plots settings
     parser.add_argument('--night_mode',type=bool, default=False, help='dont show the plots')
     parser.add_argument('--plot_mode',type=str, default="all", help='to launch several studies at the same time')
+    # vignettes
+    parser.add_argument('--nb_lines', default=5, type=int)# number of directions generated,good value : precise 100, fast 60, ultrafast 50
+    parser.add_argument('--minalpha', default=0.0, type=float)# start value for alpha, good value : 0.0
+    parser.add_argument('--nb_eval', default=5, type=float)# number of steps for the evaluation. Depends on environment.
+    parser.add_argument('--maxalpha', default=0.1, type=float)# end value for alpha, good value : large 100, around model 10
+    parser.add_argument('--stepalpha', default=0.001, type=float)# step for alpha in the loop, good value : precise 0.5 or 1, less precise 2 or 3
+    #	2D plot parameters
+    parser.add_argument('--pixelWidth', default=10, type=int)# width of each pixel in 2D Vignette
+    parser.add_argument('--pixelHeight', default=10, type=int)# height of each pixel in 2D Vignette
+    #	3D plot parameters
+    parser.add_argument('--x_diff', default=2., type=float)# the space between each point along the x-axis
+    parser.add_argument('--y_diff', default=2., type=float)# the space between each point along the y-axis
+
+    # File management
+	#	Input parameters
+    parser.add_argument('--inputDir', default="Models", type=str)# name of the directory containing the models to load
+    parser.add_argument('--basename', default="rl_model_", type=str)# file prefix for the loaded model
+    parser.add_argument('--min_iter', default=1, type=int)# iteration (file suffix) of the first model
+    parser.add_argument('--max_iter', default=10, type=int)# iteration (file suffix) of the last model
+    parser.add_argument('--step_iter', default=1, type=int)# iteration step between two consecutive models
+    # 		Input policies parameters
+    parser.add_argument('--policiesPath', default='None', type=str) # path to a list of policies to be included in Vignette
+    #	Output parameters
+    parser.add_argument('--saveInFile', default=True, type=bool)# true if want to save the savedVignette
+    parser.add_argument('--save2D', default=True, type=bool)# true if want to save the 2D Vignette
+    parser.add_argument('--save3D', default=True, type=bool)# true if want to save the 3D Vignette
+    parser.add_argument('--directoryFile', default="SavedVignette", type=str)# name of the directory that will contain the vignettes
+    parser.add_argument('--directory2D', default="Vignette_output", type=str)# name of the directory that will contain the 2D vignette
+    parser.add_argument('--directory3D', default="Vignette_output", type=str)# name of the directory that will contain the 3D vignette
     '''
     parser.add_argument('--save-interval', type=int, default=5, help='the interval that save the trajectory')
     parser.add_argument('--seed', type=int, default=123, help='random seed')

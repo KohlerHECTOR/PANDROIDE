@@ -24,7 +24,7 @@ class NormalPolicy(GenericNet):
         self.h2_size = l3
         self.fc_mu_size = l4
         self.fc_std_size = l4
-        
+
     def set_weights_pg(self, fc1_w, fc1_b, fc2_w, fc2_b): #reset the weights after backpropagation
         # set the weights for each layer
         self.fc1.weight.data.copy_(fc1_w.view_as(self.fc1.weight.data))
@@ -44,7 +44,7 @@ class NormalPolicy(GenericNet):
         #fc_std_b = self.fc_std.bias.data
         return fc1_w, fc1_b, fc2_w, fc2_b
 
-    def set_weights(self, weights, fix_layers):
+    def set_weights(self, weights, fix_layers=False):
         if fix_layers: # last layers weights
             h2_size = self.h2_size
             fc_mu_size = self.fc_mu_size
@@ -186,3 +186,5 @@ class NormalPolicy(GenericNet):
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
             self.train_regress(state, action)
+    def test(self):
+        return torch.nn.utils.parameters_to_vector(self.parameters()).detach().cpu().numpy()
