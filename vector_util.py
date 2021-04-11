@@ -34,14 +34,22 @@ def checkFormat(fileExt):
 		return wrapper
 	return decorator	
 
-def valueToRGB(value, color1=None, color2=None, minVal=1, maxVal=1):
+def valueToRGB(value, color1=(255,0,0), color2=(0,255,0), pureNorm=None, minNorm=-1, maxNorm=1):
 	"""
 	Converts a value to an RGB color, between color1 and color2
-
 	Pure colors for values of norm >= pureNorm
 	"""
-	greenValue =int(1+(254-1)*(value-minVal)/(maxVal-minVal))
-	return (0,greenValue,0)
+	if pureNorm is not None:
+		if value**2 > pureNorm**2:
+			value = pureNorm if value > 0 else -pureNorm
+		weight = value/pureNorm
+		return tuple(int(color1[k] * (1-weight)/2) + int(color2[k] * (1+weight)/2) for k in range(len(color1)))
+	
+	value = minNorm if value <= minNorm else value
+	value = maxNorm if value >= maxNorm else value
+	
+	weight1, weight2 = abs((maxNorm - value)/(maxNorm - minNorm)), abs((minNorm - value)/(maxNorm - minNorm))
+	return tuple(int(color1[k] * weight1) + int(color2[k] * weight2) for k in range(len(color1)))
 
 def invertColor(color):
 	"""
@@ -52,7 +60,6 @@ def invertColor(color):
 def getPointsChoice(init_params,num_params, minalpha, maxaplha, stepalpha, prob):
 	"""
 	# Params :
-
 	init_params : model parameters to study around (array)
 	num_params : the length of the parameters array (int)
 	minalpha : the start value for alpha parameter (float)
@@ -61,7 +68,6 @@ def getPointsChoice(init_params,num_params, minalpha, maxaplha, stepalpha, prob)
 	prob : the probability to choose each parameter dimension (float)
 	
 	# Function:
-
 	Returns parameters around base_params on direction choosen by random choice of proba 'prob' on param dimensions.
 	Parameters starts from base_params to base_params+maxalpha on one side of the direction and
 	from base_params to base_params-maxaplha on the other side. The step of alpha is stepalpha.
@@ -80,7 +86,6 @@ def getPointsChoice(init_params,num_params, minalpha, maxaplha, stepalpha, prob)
 def getPointsUniform(init_params,num_params, minalpha, maxaplha,stepalpha):
 	"""
 	# Params :
-
 	init_params : model parameters to study around (array)
 	num_params : the length of the parameters array (int)
 	minalpha : the start value for alpha parameter (float)
@@ -88,7 +93,6 @@ def getPointsUniform(init_params,num_params, minalpha, maxaplha,stepalpha):
 	stepalpha : the step for alpha value in the loop (float)
 	
 	# Function:
-
 	Returns parameters around base_params on direction choosen by uniform random draw on param dimensions in [0,1).
 	Parameters starts from base_params to base_params+maxalpha on one side of the direction and
 	from base_params to base_params-maxaplha on the other side. The step of alpha is stepalpha.
@@ -106,7 +110,6 @@ def getPointsUniform(init_params,num_params, minalpha, maxaplha,stepalpha):
 def getPointsDirection(init_params,num_params, minalpha, maxaplha,stepalpha, d):
 	"""
 	# Params :
-
 	init_params : model parameters to study around (array)
 	num_params : the length of the parameters array (int)
 	minalpha : the start value for alpha parameter (float)
@@ -115,7 +118,6 @@ def getPointsDirection(init_params,num_params, minalpha, maxaplha,stepalpha, d):
 	d : pre-choosend direction
 	
 	# Function:
-
 	Returns parameters around base_params on direction given in parameters.
 	Parameters starts from base_params to base_params+maxalpha on one side of the direction and
 	from base_params to base_params-maxaplha on the other side. The step of alpha is stepalpha.
@@ -132,7 +134,6 @@ def getPointsDirection(init_params,num_params, minalpha, maxaplha,stepalpha, d):
 def getPointsUniformCentered(init_params,num_params, minalpha, maxaplha,stepalpha):
 	"""
 	# Params :
-
 	init_params : model parameters to study around (array)
 	num_params : the length of the parameters array (int)
 	minalpha : the start value for alpha parameter (float)
@@ -140,7 +141,6 @@ def getPointsUniformCentered(init_params,num_params, minalpha, maxaplha,stepalph
 	stepalpha : the step for alpha value in the loop (float)
 	
 	# Function:
-
 	Returns parameters around base_params on direction choosen by uniform random draw on param dimensions in [-1,1].
 	Parameters starts from base_params to base_params+maxalpha on one side of the direction and
 	from base_params to base_params-maxaplha on the other side. The step of alpha is stepalpha. 
@@ -158,12 +158,10 @@ def getPointsUniformCentered(init_params,num_params, minalpha, maxaplha,stepalph
 def getDirectionsMuller(nb_directions,num_params):
     """
     # Params :
-
     nb_directions : number of directions to generate randomly in unit ball
     num_params : dimensions of the vectors to generate (int value, only 1D vectors)
 	
     # Function:
-
     Returns a list of vectors generated in the uni ball of 'num_params' dimensions, using Muller
     """
     D = []
@@ -182,10 +180,8 @@ def getDirectionsMuller(nb_directions,num_params):
 def euclidienne(x,y):
     """
     # Params :
-
 	
     # Function:
-
     Returns a simple euclidian distance between x and y.
     """
 	
@@ -194,11 +190,9 @@ def euclidienne(x,y):
 def order_all_by_proximity(vectors):
     """
     # Params :
-
     vectors : a list of vectors
 	
     # Function:
-
     Returns the list of vectors ordered by inserting the vectors between their nearest neighbors
     """
     ordered = []
@@ -215,12 +209,10 @@ def order_all_by_proximity(vectors):
 def compute_best_insert_place(vect, ordered_vectors):
     """
     # Params :
-
     ordered_vectors : a list of vectors ordered by inserting the vectors between their nearest neighbors
     vect : a vector to insert at the best place in the ordered list of vectors
 	
     # Function:
-
     Returns the index where 'vect' should be inserted to be between the two nearest neighbors using euclidien distance
     """
     # Compute the index where the vector will be at the best place :
@@ -233,3 +225,4 @@ def compute_best_insert_place(vect, ordered_vectors):
     dist_place.append(value_dist)
     ind = np.argmin(dist_place)
     return ind
+

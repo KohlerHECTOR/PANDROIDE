@@ -73,8 +73,8 @@ def get_args():
     parser.add_argument('--nb_lines', default=5, type=int)# number of directions generated,good value : precise 100, fast 60, ultrafast 50
     parser.add_argument('--minalpha', default=0.0, type=float)# start value for alpha, good value : 0.0
     parser.add_argument('--nb_eval', default=5, type=float)# number of steps for the evaluation. Depends on environment.
-    parser.add_argument('--maxalpha', default=0.1, type=float)# end value for alpha, good value : large 100, around model 10
-    parser.add_argument('--stepalpha', default=0.001, type=float)# step for alpha in the loop, good value : precise 0.5 or 1, less precise 2 or 3
+    parser.add_argument('--maxalpha', default=0.01, type=float)# end value for alpha, good value : large 100, around model 10
+    parser.add_argument('--stepalpha', default=0.0001, type=float)# step for alpha in the loop, good value : precise 0.5 or 1, less precise 2 or 3
     #	2D plot parameters
     parser.add_argument('--pixelWidth', default=10, type=int)# width of each pixel in 2D Vignette
     parser.add_argument('--pixelHeight', default=10, type=int)# height of each pixel in 2D Vignette
@@ -98,6 +98,22 @@ def get_args():
     parser.add_argument('--directoryFile', default="SavedVignette", type=str)# name of the directory that will contain the vignettes
     parser.add_argument('--directory2D', default="Vignette_output", type=str)# name of the directory that will contain the 2D vignette
     parser.add_argument('--directory3D', default="Vignette_output", type=str)# name of the directory that will contain the 3D vignette
+    # Tools parameters	#	Drawing parameters
+    parser.add_argument('--maxValue', default=360, type=int)# max score value for colormap used (dependent of benchmark used)
+    parser.add_argument('--line_height', default=3, type=int) # The height in number of pixel for each result
+	#	Dot product parameters
+    parser.add_argument('--dotWidth', default=150, type=int)# max width of the dot product (added on the side)
+    parser.add_argument('--dotText', default=True, type=str)# true if want to show value of the dot product
+    parser.add_argument('--xMargin', default=10, type=int) # xMargin for the side panel
+
+	# File management
+	#	Output parameters
+    parser.add_argument('--saveFile', default=True, type=bool) # True if want to save the Gradient as SavedGradient
+    parser.add_argument('--saveImage', default=True, type=bool) # True if want to save the Image of the Gradient
+    parser.add_argument('--directoryFileGrad', default="SavedGradient", type=str) # name of the directory where SavedGradient is saved
+    parser.add_argument('--directoryImage', default="Gradient_output", type=str) # name of the output directory that will contain the image
+    parser.add_argument('--saved_file_name', default = 'new_grad_', type = str)
+
     '''
     parser.add_argument('--save-interval', type=int, default=5, help='the interval that save the trajectory')
     parser.add_argument('--seed', type=int, default=123, help='random seed')
