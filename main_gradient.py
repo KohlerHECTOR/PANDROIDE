@@ -113,9 +113,9 @@ def study_cem(params) -> None:
         if params.policy_type=="normal":
             policy = NormalPolicy(simu.obs_size, 24, 36, 1)
         pw = PolicyWrapper(policy, params.policy_type, simu.env_name, j,params.team_name, params.max_episode_steps)
-        all_cem_weights,best_cem_weights,all_rewards=simu.train(pw, params, policy, False, reward_file, "", study[0], 0, True)
+        all_cem_weights,best_cem_weights,all_rewards,index_best=simu.train(pw, params, policy, False, reward_file, "", study[0], 0, True)
     cem_time = chrono_cem.stop()
-    return cem_time,all_cem_weights,best_cem_weights,all_rewards
+    return cem_time,all_cem_weights,best_cem_weights,all_rewards,index_best
 
 def study_pg(params) -> None:
     """
@@ -151,7 +151,8 @@ def study_pg(params) -> None:
 if __name__ == '__main__':
     args = get_args()
     print(args)
-    pg_time,all_pg_weights,best_pg_weights,all_rewards_pg,idx_best = study_pg(args)
+    pg_time,all_pg_weights,best_pg_weights,all_rewards,idx_best = study_pg(args)
+    print(idx_best)
     env = gym.make(args.env_name)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
@@ -162,7 +163,7 @@ if __name__ == '__main__':
     base_vect = theta0
     D = getDirectionsMuller(args.nb_lines,num_params)
     D = order_all_by_proximity(D)
-    policies=[all_pg_weights[idx_best-2],all_pg_weights[idx_best-1],best_pg_weights,all_pg_weights[idx_best+1],all_pg_weights[idx_best+2]]
+    policies=[all_pg_weights[idx_best-3],all_pg_weights[idx_best-2],all_pg_weights[idx_best-1],all_pg_weights[idx_best],all_pg_weights[idx_best+1]]
 
 	# Compute fitness over these directions :
     previous_theta = None # Remembers theta
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     for policy in policies:
 
 		# Change which model to load
-        filename = 'grad_new'+str(count)
+        filename = args.saved_file_name+str(count)
         count+=1
 
 		# Load the model

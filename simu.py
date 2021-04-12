@@ -107,7 +107,7 @@ class Simu:
 
                 #policy.set_weights(init_weights[0,:], False)
 
-    def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False) -> None:
+    def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False):
         all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         all_rewards=np.zeros(params.nb_cycles)
         best_reward=-np.inf
@@ -172,6 +172,7 @@ class Simu:
                 if total_reward>best_reward:
                     best_weights=mu
                     best_reward=total_reward
+                    idx_best=cycle
                 all_rewards[cycle]=total_reward
                 # if total_reward>np.min(top_ten_scores):
                 #     temp_min=np.argmin(top_ten_scores)
@@ -223,6 +224,7 @@ class Simu:
         # # print(X_embedded)
         # plt.scatter(*zip(*X_embedded))
         return all_weights,best_weights,all_rewards,idx_best
+        # return all_weights,all_rewards,all_pops,all_pops_scores,list_elite_index
 
 
 
@@ -238,6 +240,44 @@ class Simu:
         #     policy.set_weights(top_ten_policies[i],fixed)
         #     print(top_ten_scores)
         #     pw.save(top_ten_scores[i])
+
+
+
+   # A COMPLETER
+    def train_cem(self, pw,params, policy):
+        all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
+        all_rewards=np.zeros(params.nb_cycles)
+        best_reward=-np.inf
+        best_weights=np.zeros(policy.get_weights_dim(False))
+        fixed=params.fix_layers
+        idx_best=0
+        all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(fixed)))
+        best_weights=np.zeros(policy.get_weights_dim(fixed))
+        #random init of the neural network.
+        #so far, all the layers are initialized with the same gaussian.
+        init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+        #print(np.shape(init_weights))
+        #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
+        policy.set_weights(init_weights, False)
+
+        print(fixed)
+        #print(params.fix_layers)
+        #print(policy.get_weights_dim(params.fix_layers))
+        study = params.study_name
+        noise=np.diag(np.ones(policy.get_weights_dim(fixed))*params.sigma)
+        #print(np.shape(noise))
+        #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
+        #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
+
+        var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
+        print(np.shape(var))
+        mu=init_weights[-policy.get_weights_dim(fixed):]
+        print(np.shape(mu))
+        rng = np.random.default_rng()
+
+        #we can draw the last layer from a different gaussian
+        #mu=params.sigma_bis*np.random.randn(policy.get_weights_dim(params.fix_layers))
+
 
     def train_on_one_episode(self, policy, deterministic, render=False):
         """
