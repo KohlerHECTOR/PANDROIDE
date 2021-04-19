@@ -172,7 +172,7 @@ if __name__ == '__main__':
     for policy in policies:
 
 		# Change which model to load
-        filename = args.saved_file_name+str(count)
+        filename = args.saved_file_name+str(count)+".png"
         count+=1
 
 		# Load the model
