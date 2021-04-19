@@ -36,16 +36,19 @@ def checkFormat(fileExt):
 		return wrapper
 	return decorator
 
-def valueToRGB(value, color1=(255,0,0), color2=(0,255,0), pureNorm=None, minNorm=-1, maxNorm=1):
+def valueToRGB(value, color1=(255,0,0), color2=(0,255,0), pureNorm=None, minNorm=0, maxNorm=1):
 	"""
 	Converts a value to an RGB color, between color1 and color2
 	Pure colors for values of norm >= pureNorm
 	"""
 
-	normalised=round(((value-minNorm)/(maxNorm-minNorm)),5)
-	if minNorm ==-1 and maxNorm ==1:
+
+	if minNorm ==0 and maxNorm ==1:
+		normalised=value
+		print(normalised)
 		cmap = matplotlib.cm.get_cmap('RdYlGn')
 	else:
+		normalised=round(((value-minNorm)/(maxNorm-minNorm)),5)
 		cmap = matplotlib.cm.get_cmap('viridis')
 	col=cmap(normalised)
 	col=np.array(mat_col.to_rgb(col))*255

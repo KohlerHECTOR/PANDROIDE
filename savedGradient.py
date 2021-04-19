@@ -94,7 +94,7 @@ class SavedGradient:
 
 			#	Processing the dot product,
 			if l < len(self.results)-1:
-				dot_product = np.dot(self.directions[l], self.directions[l+1])
+				dot_product = abs(np.dot(self.directions[l], self.directions[l+1]))
 				color = valueToRGB(dot_product, (255,0,0), (0,255,0), pureNorm=1)
 
 				# Putting in on the side with a small margin
