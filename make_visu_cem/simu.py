@@ -84,9 +84,9 @@ class Simu:
          """
         self.env.set_reward_flag(True)
         self.env.set_duration_flag(True)
-        state = self.reset(render)
         mean_reward = 0
         for j in range(10):
+            state = self.reset(render)
             total_reward=0
             for t in count():
                 action = policy.select_action(state, deterministic)
@@ -96,9 +96,9 @@ class Simu:
                 state = next_state
 
                 if done:
-                    mean_reward+=total_reward/10
+                    mean_reward+=total_reward
                     break
-        return mean_reward
+        return mean_reward/10
 
                 #For saving top 10 policies obtained
                 # self.evaluate_episode(policy, params.deterministic_eval)
