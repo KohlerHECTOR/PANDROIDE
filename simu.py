@@ -85,7 +85,7 @@ class Simu:
         self.env.set_reward_flag(True)
         self.env.set_duration_flag(True)
         state = self.reset(render)
-        total_reward = 0
+        total_reward=0
         for t in count():
             action = policy.select_action(state, deterministic)
             # print("action", action)
@@ -194,9 +194,12 @@ class Simu:
                 algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
                 algo.prepare_batch(batch)
                 policy_loss = batch.train_policy_td(policy)
+                # print(np.shape(policy.get_gradient()))
                 # if (cycle+1)%3==0:
                 #     all_weights[int((cycle+1)/3)-1]=policy.get_weights_as_numpy()
                 all_weights[cycle]=policy.get_weights_as_numpy()
+                # grad=policy.get_gradient()
+                # print(np.linalg.norm(grad-all_weights[cycle])*params.lr_actor)
                 #print(policy_loss)
 
                 # Update the critic
@@ -214,6 +217,11 @@ class Simu:
                     policy.set_weights_pg(fc1_w, fc1_b, fc2_w, fc2_b)
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval)
                 all_rewards[cycle]=total_reward
+
+
+                # if cycle > 0:
+                #     distance=np.linalg.norm(all_weights[cycle]-all_weights[cycle-1])
+                #     print("distance between pol"+str(cycle-1)+" and pol"+str(cycle)+" : "+str(distance))
                 if total_reward>best_reward:
                     best_weights=policy.get_weights_as_numpy()
                     best_reward=total_reward
@@ -290,7 +298,7 @@ class Simu:
         episode = Episode()
         state = self.reset(render)
         for t in count():
-            action = policy.select_action(state, deterministic)
+            action = policy.select_action(state,deterministic)
             next_state, _, done = self.take_step(state, action, episode, render)
             state = next_state
 
