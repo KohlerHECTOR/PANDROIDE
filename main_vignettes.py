@@ -161,10 +161,7 @@ if __name__ == '__main__':
     num_params = len(theta0)
     base_vect = theta0
     D = getDirectionsMuller(args.nb_lines,num_params)
-    policies=[all_pg_weights[idx_best-3],all_pg_weights[idx_best-2],all_pg_weights[idx_best-1],best_pg_weights,all_pg_weights[idx_best+1]]
-    print('euclidienne:')
-    print(euclidienne(best_pg_weights,all_pg_weights[idx_best+1]))
-    print(np.linalg.norm(all_pg_weights[idx_best+1]-best_pg_weights))
+    policies=[all_pg_weights[idx_best-1],all_pg_weights[idx_best]]
 
 	# Compute fitness over these directions :
     previous_theta = None # Remembers theta

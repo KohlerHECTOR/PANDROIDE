@@ -38,12 +38,12 @@ class SavedGradient:
         self.color1, self.color2 = color1, color2 # Color palette used by the gradient
         self.pixelWidth, self.pixelHeight = pixelWidth, pixelHeight
         self.maxValue = maxValue
-        
+
         # Dot product parameters
         self.dotText = dotText # True if we want to show the value of the dot product
         self.dotWidth = dotWidth # Width of the side panel containing the dot product
         self.xMargin, self.yMargin = xMargin, yMargin # Margin for the dot product's bar
-	
+
     @checkFormat(saveFormat)
     def saveGradient(self, filename, directory="SavedGradient"):
         """
@@ -63,8 +63,16 @@ class SavedGradient:
         newIm = Image.new("RGB",(width+self.dotWidth, height))
         newDraw = ImageDraw.Draw(newIm)
 
-        meanValue, stdValue = np.mean(self.results), np.std(self.results)
-        minColor, maxColor = meanValue - stdValue, np.max(self.results)
+        maxColor=-2000
+		minColor=0
+		for l in range(len(self.results)):
+			for c in range(len(self.results[l])):
+				if self.results[l][c]>maxColor:
+					maxColor=self.results[l][c]
+				if self.results[l][c]<minColor :
+					minColor=self.results[l][c]
+		print(minColor,maxColor)
+		print(valueToRGB(maxColor))
         #	Putting the results and markers
         for l in range(len(self.results)):
             #	Separating lines containing the model's markers
@@ -82,7 +90,7 @@ class SavedGradient:
             for c in range(len(self.results[l])):
                 x0 = c * self.pixelWidth
                 x1 = x0 + self.pixelWidth
-                color = valueToRGB(self.results[l][c], color1, color2, minNorm=minColor, maxNorm=maxColor)
+                color = valueToRGB(self.lines[l][c], color1, color2, minNorm=minColor, maxNorm=maxColor)
                 newDraw.rectangle([x0, y0, x1, y1], fill=color)
 
             #	Processing the dot product,
@@ -106,14 +114,14 @@ class SavedGradient:
         Changes the color palette used in the gradient's image
         """
         self.color1, self.color2 = color1, color2
-    
+
 if __name__ == "__main__":
     print("Parsing arguments")
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--directory', default="SavedGradient", type=str) # directory containing the savedModel
     parser.add_argument('--filename', default="rl_model_", type=str) # name of the file to load
-    
+
     parser.add_argument('--outputDir', default="Gradient_output", type=str) # output directory
     parser.add_argument('--outputName', default="test_palette", type=str) # output name
 
