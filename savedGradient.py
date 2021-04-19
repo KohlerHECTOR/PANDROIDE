@@ -89,7 +89,7 @@ class SavedGradient:
 			for c in range(len(self.results[l])):
 				x0 = c * self.pixelWidth
 				x1 = x0 + self.pixelWidth
-				color = valueToRGB(self.lines[l][c], color1, color2, minNorm=minColor, maxNorm=maxColor)
+				color = valueToRGB(self.results[l][c], color1, color2, minNorm=minColor, maxNorm=maxColor)
 				newDraw.rectangle([x0, y0, x1, y1], fill=color)
 
 			#	Processing the dot product,

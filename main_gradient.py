@@ -219,11 +219,12 @@ if __name__ == '__main__':
         newGradient.green_markers.append(marker_actor)
     		# 	Putting it all together
         newGradient.results.append(line)
-    try:
-    		# Assembling the image, saving it if asked
-        newGradient.computeImage(saveImage=args.saveImage, filename=filename, directory=args.directoryImage)
-    except Exception as e:
-        newGradient.saveGradient(filename=filename, directory=args.directoryFileGrad)
+    newGradient.computeImage(saveImage=args.saveImage, filename=filename, directory=args.directoryImage)
+    # try:
+    # 		# Assembling the image, saving it if asked
+    #     newGradient.computeImage(saveImage=args.saveImage, filename=filename, directory=args.directoryImage)
+    # except Exception as e:
+    #     newGradient.saveGradient(filename=filename, directory=args.directoryFileGrad)
 
     	# Saving the SavedGradient if asked
     if args.saveFile is True: newGradient.saveGradient(filename=filename, directory=args.directoryFileGrad)
