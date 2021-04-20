@@ -131,6 +131,7 @@ class Batch:
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
             reward = np.array(episode.reward_pool)
+            reward = (reward+2000)/2000
             if do_print: print("state", state)
             if do_print: print("action", action)
             if do_print: print("reward", reward)
