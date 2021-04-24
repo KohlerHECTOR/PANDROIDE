@@ -38,5 +38,4 @@ class GenericNet(nn.Module):
         """
         self.optimizer.zero_grad()
         loss.sum().backward()
-        self.optimizer.step()
-
+        self.optimizer.step()    

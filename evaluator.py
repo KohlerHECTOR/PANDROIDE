@@ -50,10 +50,8 @@ class Evaluator:
          """
         listdir = os.listdir(folder)
         for policy_file in listdir:
-            print(policy_file)
-            print('ok')
-            pw = PolicyWrapper(GenericNet(), "", "", 10,"", 0)
-            policy = pw.load(folder + policy_file)
+            pw = PolicyWrapper(GenericNet(), "", "", "", 0)
+            policy,_ = pw.load(folder + policy_file)
             if pw.env_name in self.env_dict:
                 env = make_env(pw.env_name, pw.policy_type, pw.max_steps)
                 env.set_reward_flag(False)

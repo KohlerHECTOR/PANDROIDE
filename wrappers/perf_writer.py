@@ -7,11 +7,11 @@ class PerfWriter(gym.Wrapper):
     This wrapper is used to save the performance and episode duration into a file in a transparent way
     Two flags are used to decide if one wants to save respectively performance and episode duration
     They can be set from outside anytime
-    
+
     The set_file_name() function has to be called on the environment before starting to save data, specifying
     the file name
     Files are saved in "./data/save/"
-    
+
     """
     def __init__(self, env):
         super(PerfWriter, self).__init__(env)
@@ -42,6 +42,10 @@ class PerfWriter(gym.Wrapper):
             if self.duration_flag:
                 self.duration_file.write(str(self.num_episode) + ' ' + str(self.duration) + '\n')
         return observation, reward, done, info
+
+    def write_reward(self,cycle,reward):
+        self.reward_file.write(str(cycle) + ' ' + str(reward) + '\n')
+
 
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)

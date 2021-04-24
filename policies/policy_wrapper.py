@@ -8,15 +8,15 @@ class PolicyWrapper:
     which are necessary to display the result of evaluations.
     These two informations are stored into the file name when saving the policy to be evaluated.
     """
-    def __init__(self, policy, policy_type, env_name, team_name, max_steps, count_tens=1):
+    def __init__(self, policy, policy_type, env_name, team_name, max_steps):
         self.policy = policy
         self.policy_type = policy_type
         self.env_name = env_name
         self.team_name = team_name
         self.max_steps = max_steps
-        self.count=1+(10*count_tens)
+        self.score = 0
 
-    def save(self, score=0) -> None:
+    def save(self, cycle, method = 'PG',score=0) -> None:
         """
         Save the model into a file whose name contains useful information for later evaluation
         :param score: the score of the network
@@ -24,10 +24,9 @@ class PolicyWrapper:
         """
 
         directory = os.getcwd() + '/data/policies/'
-        filename = directory + self.env_name + '#' + str(self.count)+'#' +self.team_name + '_' + str(score) \
-                   + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(score) + '.pt'
+        filename = directory +  self.env_name + '#' + method + '#' +str(cycle)+'#' +self.team_name + '_' + str(score) \
+                   + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(score) + '#'+'.pt'
         self.policy.save_model(filename)
-        self.count+=1
 
     def load(self, filename):
         """
@@ -37,15 +36,17 @@ class PolicyWrapper:
         """
         fields = filename.split('#')
         tmp = fields[0]
+        print(fields)
         env_name = tmp.split('/')
         self.env_name = env_name[-1]
-        self.team_name = fields[2]
-        self.policy_type = fields[3]
+        self.team_name = fields[3]
+        self.policy_type = fields[4]
+        self.score = float(fields[-2])
         #### MODIF : check if max steps is None
-        if fields[4] != "None":
-            self.max_steps = int(fields[4])
+        if fields[3] != "None":
+            self.max_steps = int(fields[5])
         else:
             self.max_steps = None
         ####
         net = self.policy.load_model(filename)
-        return net
+        return net,self.score

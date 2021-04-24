@@ -69,10 +69,11 @@ def get_args():
     # plots settings
     parser.add_argument('--night_mode',type=bool, default=False, help='dont show the plots')
     parser.add_argument('--plot_mode',type=str, default="all", help='to launch several studies at the same time')
+    parser.add_argument('--nb_intervals',type=int, default=50, help='number of intervals for plot of segment')
     # vignettes
     parser.add_argument('--nb_lines', default=5, type=int)# number of directions generated,good value : precise 100, fast 60, ultrafast 50
     parser.add_argument('--minalpha', default=0.0, type=float)# start value for alpha, good value : 0.0
-    parser.add_argument('--nb_eval', default=5, type=float)# number of steps for the evaluation. Depends on environment.
+    parser.add_argument('--nb_evals', default=5, type=int)# number of steps for the evaluation. Depends on environment.
     parser.add_argument('--maxalpha', default=0.01, type=float)# end value for alpha, good value : large 100, around model 10
     parser.add_argument('--stepalpha', default=0.0001, type=float)# step for alpha in the loop, good value : precise 0.5 or 1, less precise 2 or 3
     #	2D plot parameters

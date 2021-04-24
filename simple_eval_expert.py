@@ -37,5 +37,6 @@ def expert_policy(angle, velocity):
 
 env = gym.make("Pendulum-v0")
 res=eval(env)
+print(np.mean(np.array(res)))
 plt.plot(res)
 plt.show()
