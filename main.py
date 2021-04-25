@@ -59,7 +59,7 @@ def study_cem(params) -> None:
                 policy = BernoulliPolicy(simu.obs_size, 24, 36, 1)
             if params.policy_type=="normal":
                 policy = NormalPolicy(simu.obs_size, 24, 36, 1)
-            pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+            pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
             #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
             simu.train_cem(pw, params, policy)
                        #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
@@ -85,7 +85,7 @@ def study_evo_pg(params) -> None:
                 policy = BernoulliPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
             if params.policy_type=="normal":
                 policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
-            pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+            pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
             #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
             simu.train_evo_pg(pw, params, policy)
                        #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
@@ -122,7 +122,7 @@ def study_pg(params) -> None:
             elif params.policy_type == "squashedGaussian":
                 policy = SquashedGaussianPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
             # policy = policy.cuda()
-            pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+            pw = PolicyWrapper(policy,j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
             plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
 
             if not simu.discrete:
