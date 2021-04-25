@@ -28,6 +28,18 @@ class PolicyWrapper:
                    + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(score) + '#'+'.pt'
         self.policy.save_model(filename)
 
+    def rename_best(self, method, best_cycle, best_score) -> None:
+        '''
+        Find the best model and rename it
+        :return: nothing
+        '''
+        directory = os.getcwd() + '/data/policies/'
+        name = self.env_name + '#' + method + '#' +str(best_cycle)+'#' +self.team_name + '_' + str(best_score) \
+                   + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(best_score) + '#'
+        os.rename(directory + name+'.pt', directory + name + "BESTRUN" + '#'+'.pt')
+
+
+
     def load(self, filename):
         """
         Load a model from a file whose name contains useful information for evaluation (environment name and team name)

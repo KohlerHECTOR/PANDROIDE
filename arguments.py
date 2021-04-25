@@ -66,6 +66,10 @@ def get_args():
     parser.add_argument('--bests_frac',type=float, default=1, help='proportion of the population to keep at each iter')
     parser.add_argument('--population',type=int, default=15, help='population')
 
+    # evaluation settings
+    parser.add_argument('--eval_freq', default=1, type=int)# frequence for the evaluation.
+    parser.add_argument('--save_freq', default=1, type=int)# frequence for the saving evaluation.
+
     # plots settings
     parser.add_argument('--night_mode',type=bool, default=False, help='dont show the plots')
     parser.add_argument('--plot_mode',type=str, default="all", help='to launch several studies at the same time')
