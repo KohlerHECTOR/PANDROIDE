@@ -23,6 +23,7 @@ class PerfWriter(gym.Wrapper):
         self.duration_flag = True
         self.duration_file = None
         self.reward_file = None
+        self.gradient_angles_file = None
 
         self.directory = os.getcwd() + '/data/save/'
         if not os.path.exists(self.directory):
@@ -46,6 +47,10 @@ class PerfWriter(gym.Wrapper):
     def write_reward(self,cycle,reward):
         self.reward_file.write(str(cycle) + ' ' + str(reward) + '\n')
 
+    def write_gradients(self, gradient_angles):
+        for i in range(len(gradient_angles)):
+            self.gradient_angles_file.write(str(i)+' '+str(gradient_angles[i])+ '\n')
+
 
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)
@@ -60,6 +65,8 @@ class PerfWriter(gym.Wrapper):
             self.reward_file.close()
         if self.duration_file:
             self.duration_file.close()
+        if self.gradient_angles_file:
+            self.gradient_angles_file.close()
 
     def set_reward_flag(self, val):
         self.reward_flag = val
@@ -72,3 +79,5 @@ class PerfWriter(gym.Wrapper):
         self.duration_file = open(duration_name, "w")
         reward_name = self.directory + "reward_" + name + ".txt"
         self.reward_file = open(reward_name, "w")
+        gradient_angles_name = self.directory + "gradient_angles_" + name + ".txt"
+        self.gradient_angles_file = open(gradient_angles_name, "w")
