@@ -145,7 +145,6 @@ class Batch:
             mean_loss = policy_loss.mean()
             losses.append(mean_loss)
         if do_print: print("end of training data :")
-        print(gradient_angles)
         return np.array(losses).mean(), gradient_angles
 
     def train_policy_cem(self, policy, bests_frac):
