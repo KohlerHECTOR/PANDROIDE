@@ -106,8 +106,6 @@ class SavedVignette:
 					maxColor=self.lines[l][c]
 				if self.lines[l][c]<minColor :
 					minColor=self.lines[l][c]
-		print(minColor,maxColor)
-		print(valueToRGB(maxColor))
 		#	Adding the results
 		y0 = 0
 		for l in range(len(self.lines)):

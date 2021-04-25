@@ -34,7 +34,7 @@ def get_args():
     parser.add_argument('--env_obs_space_name', type=str, default=["pos", "angle"])  # ["pos", "angle", "vx", "v angle"]
     parser.add_argument('--render', type=bool, default=False, help='visualize the run or not') # Only False when not used
     # study settings
-    parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem')
+    parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem, evo_pg')
     parser.add_argument('--critic_update_method', type=str, default="dataset", help='critic update method: batch or dataset')
     parser.add_argument('--policy_type', type=str, default="normal", help='policy type: bernoulli, normal, squashedGaussian, discrete')
     parser.add_argument('--team_name', type=str, default='default_team', help='team name')

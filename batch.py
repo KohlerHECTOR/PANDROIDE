@@ -125,8 +125,10 @@ class Batch:
         """
         do_print = False
         losses = []
+        gradient_angles = []
         if do_print: print("training data :")
         for j in range(self.size):
+            tmp = policy.get_weights()
             episode = self.episodes[j]
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
@@ -136,12 +138,15 @@ class Batch:
             if do_print: print("action", action)
             if do_print: print("reward", reward)
             policy_loss = policy.train_pg(state, action, reward)
+            gradient = policy.get_gradient()
+            gradient_angles.append(np.dot(tmp,gradient)/np.linalg.norm(gradient-tmp))
             if do_print: print("loss", policy_loss)
             policy_loss = policy_loss.data.numpy()
             mean_loss = policy_loss.mean()
             losses.append(mean_loss)
         if do_print: print("end of training data :")
-        return np.array(losses).mean()
+        print(gradient_angles)
+        return np.array(losses).mean(), gradient_angles
 
     def train_policy_cem(self, policy, bests_frac):
         """

@@ -70,8 +70,6 @@ class SavedGradient:
 					maxColor=self.results[l][c]
 				if self.results[l][c]<minColor :
 					minColor=self.results[l][c]
-		print(minColor,maxColor)
-		print(valueToRGB(maxColor))
 		#	Putting the results and markers
 		for l in range(len(self.results)):
 			#	Separating lines containing the model's markers

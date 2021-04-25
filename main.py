@@ -65,6 +65,32 @@ def study_cem(params) -> None:
                        #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
     chrono.stop()
 
+def study_evo_pg(params) -> None:
+    """
+    Start a study of CEM algorithms
+    :param params: the parameters of the study
+    :return: nothing
+    """
+    assert params.policy_type in ['bernoulli', 'normal'], 'unsupported policy type'
+    chrono = Chrono()
+    # cuda = torch.device('cuda')
+    study = params.gradients
+    simu = make_simu_from_params(params)
+    for i in range(1): #len(study) Only sum here
+        simu.env.set_file_name('evo_pg'+ study[i] + '_' + simu.env_name)
+        print("study : ", study[i])
+        for j in range(params.nb_repet):
+            simu.env.reinit()
+            if params.policy_type == "bernoulli":
+                policy = BernoulliPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+            if params.policy_type=="normal":
+                policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+            pw = PolicyWrapper(policy, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+            #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
+            simu.train_evo_pg(pw, params, policy)
+                       #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
+    chrono.stop()
+
 def study_pg(params) -> None:
     """
     Start a study of the policy gradient algorithms
@@ -128,10 +154,15 @@ if __name__ == '__main__':
         study_pg(args)
         plot_results(args)
     elif args.study_name == 'comparison':
+        # print('evo_pg')
+        # study_evo_pg(args)
         print('CEM')
         study_cem(args)
         print('PG')
         study_pg(args)
+        plot_results(args)
+    elif args.study_name == 'evo_pg':
+        study_evo_pg(args)
         plot_results(args)
     else:
         study_pg(args)

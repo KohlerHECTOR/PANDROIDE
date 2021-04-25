@@ -71,12 +71,26 @@ def exploit_reward_full(params) -> None:
     plt.savefig(path + '/../results/rewards_' + make_full_string(params) + '.pdf')
     plt.show()
 
+def exploit_angles_full(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/gradient_angles_" + params.study_name+study[i] + '_' + params.env_name + '.txt', params.study_name +'_'+"gradient_angles " + study[i])
+
+    plt.title(params.env_name)
+    plt.xlabel("cycle")
+    plt.ylabel("angle")
+    plt.legend(loc="best")
+    plt.savefig(path + '/../results/gradient_angles_' + make_full_string(params) + '.pdf')
+    plt.show()
+
 def exploit_reward_full_comparison(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
     for i in range(len(study)):
         plot_data(path + "/reward_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "reward pg")
         plot_data(path + "/reward_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "reward cem")
+        # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
@@ -213,6 +227,7 @@ def plot_results(params) -> None:
     if params.study_name == "pg":
         # exploit_duration_full(params)
         exploit_reward_full(params)
+        exploit_angles_full(params)
         exploit_policy_loss_full(params)
         exploit_critic_loss_full(params)
     elif params.study_name == "nstep":
@@ -221,6 +236,8 @@ def plot_results(params) -> None:
         exploit_reward_full(params)
     elif params.study_name == 'comparison':
         exploit_reward_full_comparison(params)
+    elif params.study_name == 'evo_pg':
+        exploit_reward_full(params)
 
 
 def plot_results_cem(params) -> None:

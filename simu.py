@@ -204,7 +204,7 @@ class Simu:
             batch2 = batch.copy_batch()
             algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
             algo.prepare_batch(batch)
-            policy_loss = batch.train_policy_td(policy)
+            policy_loss,gradient_angles = batch.train_policy_td(policy)
 
             # Update the critic
             assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
@@ -223,6 +223,7 @@ class Simu:
             print(total_reward)
             #wrote and store reward
             self.env.write_reward(cycle,total_reward)
+            self.env.write_gradients(gradient_angles)
             self.list_rewards[cycle] = total_reward
             # plot_trajectory(batch2, self.env, cycle+1)
 
@@ -233,6 +234,70 @@ class Simu:
                 self.best_weights_idx = cycle
         #Save the best policy obtained
             pw.save(cycle = cycle,score = total_reward)
+
+
+    def train_evo_pg(self,pw, params,policy) -> None:
+        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
+        self.best_weights = np.zeros(policy.get_weights_dim(False))
+        self.list_rewards = np.zeros((int(params.nb_cycles)))
+
+        print("Shape of weights vector is: ", np.shape(self.best_weights))
+
+        #Init the first centroid randomly
+        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+        #Set the weights with this random centroid
+        policy.set_weights(centroid, False)
+        #Init the noise matrix
+        noise=np.diag(np.ones(policy.get_weights_dim(False))*params.sigma)
+        #Init the covariance matrix
+        var=np.diag(np.ones(policy.get_weights_dim(False))*np.var(centroid))+noise
+        #Init the rng
+        rng = np.random.default_rng()
+        #Training Loop
+        for cycle in range(params.nb_cycles):
+            rewards = np.zeros(params.population)
+            weights=rng.multivariate_normal(centroid, var, params.population)
+            for p in range(params.population):
+                policy.set_weights(weights[p], False)
+                batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
+                rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
+
+            elites_nb = int(params.elites_frac * params.population)
+            elites_idxs = rewards.argsort()[-elites_nb:]
+            elites_weights = [weights[i] for i in elites_idxs]
+            for i in range(len(elites_weights)):
+                policy.set_weights(elites_weights[i], False)
+                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+                batch.train_policy_td(policy)
+                elites_weights[i] = policy.get_weights()
+
+                #update the best weights
+            centroid = np.array(elites_weights).mean(axis=0)
+            var = np.cov(elites_weights,rowvar=False)+noise
+
+                #print(best_weights)
+                # policy evaluation part
+            policy.set_weights(centroid, False)
+
+            self.list_weights[cycle] = policy.get_weights()
+
+            # policy evaluation part
+            total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+            print(total_reward)
+            #write and store reward_
+            self.env.write_reward(cycle,total_reward)
+            self.list_rewards[cycle] = total_reward
+            # plot_trajectory(batch2, self.env, cycle+1)
+
+            # save best reward agent (no need for averaging if the policy is deterministic)
+            if self.best_reward < total_reward:
+                self.best_reward = total_reward
+                self.best_weights = self.list_weights[cycle]
+                self.best_weights_idx = cycle
+        #Save the best policy obtained
+            pw.save(method = "Evo_pg", cycle = cycle,score = total_reward)
+
+
 
     def get_weights_data(self):
         """
@@ -312,129 +377,129 @@ class Simu:
     #         if done:
     #             return total_reward
 
-    def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False):
-        all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
-        print(np.shape(all_weights))
-        all_rewards=np.zeros(params.nb_cycles)
-        best_reward=-np.inf
-        best_weights=np.zeros(policy.get_weights_dim(False))
-        fixed=params.fix_layers
-        idx_best=0
-        if is_cem == False:
-            if fixed:
-                print(fixed)
-                fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
-                # print(fc1_w)
-                # print(policy.test())
-
-        if is_cem == True:
-            all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(fixed)))
-            best_weights=np.zeros(policy.get_weights_dim(fixed))
-            #random init of the neural network.
-            #so far, all the layers are initialized with the same gaussian.
-            init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
-            #print(np.shape(init_weights))
-            #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
-            policy.set_weights(init_weights, False)
-
-            print(fixed)
-            #print(params.fix_layers)
-            #print(policy.get_weights_dim(params.fix_layers))
-            study = params.study_name
-            noise=np.diag(np.ones(policy.get_weights_dim(fixed))*params.sigma)
-            #print(np.shape(noise))
-            #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
-            #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
-
-            var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
-            print(np.shape(var))
-            mu=init_weights[-policy.get_weights_dim(fixed):]
-            print(np.shape(mu))
-            rng = np.random.default_rng()
-
-            #we can draw the last layer from a different gaussian
-            #mu=params.sigma_bis*np.random.randn(policy.get_weights_dim(params.fix_layers))
-        for cycle in range(params.nb_cycles):
-            if is_cem == True:
-                rewards = np.zeros(params.population)
-                weights=rng.multivariate_normal(mu, var, params.population)
-                for p in range(params.population):
-                    policy.set_weights(weights[p], fixed)
-                    batch=self.make_monte_carlo_batch(params.nb_trajs_cem, params.render, policy, True)
-                    rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
-
-                elites_nb = int(params.elites_frac * params.population)
-                elites_idxs = rewards.argsort()[-elites_nb:]
-                elites_weights = [weights[i] for i in elites_idxs]
-                #update the best weights
-                mu = np.array(elites_weights).mean(axis=0)
-                var = np.cov(elites_weights,rowvar=False)+noise
-
-                #print(best_weights)
-                # policy evaluation part
-                policy.set_weights(mu, fixed)
-
-                total_reward = self.evaluate_episode(policy, params.deterministic_eval)
-                if total_reward>best_reward:
-                    best_weights=mu
-                    best_reward=total_reward
-                    idx_best=cycle
-                all_rewards[cycle]=total_reward
-                # if total_reward>np.min(top_ten_scores):
-                #     temp_min=np.argmin(top_ten_scores)
-                #     top_ten_scores[temp_min]=total_reward
-                #     top_ten_policies[temp_min]=mu
-
-                # Update the file for the plot
-                reward_file = policy_loss_file
-                reward_file.write(str(cycle) + " " + str(total_reward) + "\n")
-                # if (cycle+1)%3==0:
-                    # all_weights[int((cycle+1)/3)-1]=mu
-                all_weights[cycle]=mu
-
-            elif is_cem == False:
-                batch = self.make_monte_carlo_batch(params.nb_trajs_pg, params.render, policy)
-
-                # Update the policy
-                batch2 = batch.copy_batch()
-                algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
-                algo.prepare_batch(batch)
-                policy_loss = batch.train_policy_td(policy)
-                # print(np.shape(policy.get_gradient()))
-                # if (cycle+1)%3==0:
-                #     all_weights[int((cycle+1)/3)-1]=policy.get_weights_as_numpy()
-                all_weights[cycle]=policy.get_weights_as_numpy()
-                # grad=policy.get_gradient()
-                # print(np.linalg.norm(grad-all_weights[cycle])*params.lr_actor)
-                #print(policy_loss)
-
-                # Update the critic
-                assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
-                if params.critic_update_method == "dataset":
-                    critic_loss = algo.train_critic_from_dataset(batch2, params)
-                elif params.critic_update_method == "batch":
-                    critic_loss = algo.train_critic_from_batch(batch2)
-                critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
-                policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
-                plot_trajectory(batch2, self.env, cycle+1)
-
-                # policy evaluation part
-                if fixed:
-                    policy.set_weights_pg(fc1_w, fc1_b, fc2_w, fc2_b)
-                total_reward = self.evaluate_episode(policy, params.deterministic_eval)
-                all_rewards[cycle]=total_reward
-
-
-                # if cycle > 0:
-                #     distance=np.linalg.norm(all_weights[cycle]-all_weights[cycle-1])
-                #     print("distance between pol"+str(cycle-1)+" and pol"+str(cycle)+" : "+str(distance))
-                if total_reward>best_reward:
-                    best_weights=policy.get_weights_as_numpy()
-                    best_reward=total_reward
-                    idx_best=cycle
-            print(total_reward)
-        # X_embedded = TSNE(n_components=2).fit_transform(all_cem_weights)
-        # # print(np.shape(X_embedded))
-        # # print(X_embedded)
-        # plt.scatter(*zip(*X_embedded))
-        return all_weights,best_weights,all_rewards,idx_best
+    # def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False):
+    #     all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
+    #     print(np.shape(all_weights))
+    #     all_rewards=np.zeros(params.nb_cycles)
+    #     best_reward=-np.inf
+    #     best_weights=np.zeros(policy.get_weights_dim(False))
+    #     fixed=params.fix_layers
+    #     idx_best=0
+    #     if is_cem == False:
+    #         if fixed:
+    #             print(fixed)
+    #             fc1_w, fc1_b, fc2_w, fc2_b = policy.get_weights_pg()
+    #             # print(fc1_w)
+    #             # print(policy.test())
+    #
+    #     if is_cem == True:
+    #         all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(fixed)))
+    #         best_weights=np.zeros(policy.get_weights_dim(fixed))
+    #         #random init of the neural network.
+    #         #so far, all the layers are initialized with the same gaussian.
+    #         init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+    #         #print(np.shape(init_weights))
+    #         #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
+    #         policy.set_weights(init_weights, False)
+    #
+    #         print(fixed)
+    #         #print(params.fix_layers)
+    #         #print(policy.get_weights_dim(params.fix_layers))
+    #         study = params.study_name
+    #         noise=np.diag(np.ones(policy.get_weights_dim(fixed))*params.sigma)
+    #         #print(np.shape(noise))
+    #         #var=np.cov(init_weights[:,-policy.get_weights_dim(fixed):],rowvar=False) + noise
+    #         #mu=init_weights[:,-policy.get_weights_dim(fixed):].mean(axis=0)
+    #
+    #         var=np.diag(np.ones(policy.get_weights_dim(fixed))*np.var(init_weights))+noise
+    #         print(np.shape(var))
+    #         mu=init_weights[-policy.get_weights_dim(fixed):]
+    #         print(np.shape(mu))
+    #         rng = np.random.default_rng()
+    #
+    #         #we can draw the last layer from a different gaussian
+    #         #mu=params.sigma_bis*np.random.randn(policy.get_weights_dim(params.fix_layers))
+    #     for cycle in range(params.nb_cycles):
+    #         if is_cem == True:
+    #             rewards = np.zeros(params.population)
+    #             weights=rng.multivariate_normal(mu, var, params.population)
+    #             for p in range(params.population):
+    #                 policy.set_weights(weights[p], fixed)
+    #                 batch=self.make_monte_carlo_batch(params.nb_trajs_cem, params.render, policy, True)
+    #                 rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
+    #
+    #             elites_nb = int(params.elites_frac * params.population)
+    #             elites_idxs = rewards.argsort()[-elites_nb:]
+    #             elites_weights = [weights[i] for i in elites_idxs]
+    #             #update the best weights
+    #             mu = np.array(elites_weights).mean(axis=0)
+    #             var = np.cov(elites_weights,rowvar=False)+noise
+    #
+    #             #print(best_weights)
+    #             # policy evaluation part
+    #             policy.set_weights(mu, fixed)
+    #
+    #             total_reward = self.evaluate_episode(policy, params.deterministic_eval)
+    #             if total_reward>best_reward:
+    #                 best_weights=mu
+    #                 best_reward=total_reward
+    #                 idx_best=cycle
+    #             all_rewards[cycle]=total_reward
+    #             # if total_reward>np.min(top_ten_scores):
+    #             #     temp_min=np.argmin(top_ten_scores)
+    #             #     top_ten_scores[temp_min]=total_reward
+    #             #     top_ten_policies[temp_min]=mu
+    #
+    #             # Update the file for the plot
+    #             reward_file = policy_loss_file
+    #             reward_file.write(str(cycle) + " " + str(total_reward) + "\n")
+    #             # if (cycle+1)%3==0:
+    #                 # all_weights[int((cycle+1)/3)-1]=mu
+    #             all_weights[cycle]=mu
+    #
+    #         elif is_cem == False:
+    #             batch = self.make_monte_carlo_batch(params.nb_trajs_pg, params.render, policy)
+    #
+    #             # Update the policy
+    #             batch2 = batch.copy_batch()
+    #             algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
+    #             algo.prepare_batch(batch)
+    #             policy_loss = batch.train_policy_td(policy)
+    #             # print(np.shape(policy.get_gradient()))
+    #             # if (cycle+1)%3==0:
+    #             #     all_weights[int((cycle+1)/3)-1]=policy.get_weights_as_numpy()
+    #             all_weights[cycle]=policy.get_weights_as_numpy()
+    #             # grad=policy.get_gradient()
+    #             # print(np.linalg.norm(grad-all_weights[cycle])*params.lr_actor)
+    #             #print(policy_loss)
+    #
+    #             # Update the critic
+    #             assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
+    #             if params.critic_update_method == "dataset":
+    #                 critic_loss = algo.train_critic_from_dataset(batch2, params)
+    #             elif params.critic_update_method == "batch":
+    #                 critic_loss = algo.train_critic_from_batch(batch2)
+    #             critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
+    #             policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
+    #             plot_trajectory(batch2, self.env, cycle+1)
+    #
+    #             # policy evaluation part
+    #             if fixed:
+    #                 policy.set_weights_pg(fc1_w, fc1_b, fc2_w, fc2_b)
+    #             total_reward = self.evaluate_episode(policy, params.deterministic_eval)
+    #             all_rewards[cycle]=total_reward
+    #
+    #
+    #             # if cycle > 0:
+    #             #     distance=np.linalg.norm(all_weights[cycle]-all_weights[cycle-1])
+    #             #     print("distance between pol"+str(cycle-1)+" and pol"+str(cycle)+" : "+str(distance))
+    #             if total_reward>best_reward:
+    #                 best_weights=policy.get_weights_as_numpy()
+    #                 best_reward=total_reward
+    #                 idx_best=cycle
+    #         print(total_reward)
+    #     # X_embedded = TSNE(n_components=2).fit_transform(all_cem_weights)
+    #     # # print(np.shape(X_embedded))
+    #     # # print(X_embedded)
+    #     # plt.scatter(*zip(*X_embedded))
+    #     return all_weights,best_weights,all_rewards,idx_best
