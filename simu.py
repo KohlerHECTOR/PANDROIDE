@@ -152,22 +152,24 @@ class Simu:
             self.list_weights[cycle] = policy.get_weights()
 
             # policy evaluation part
-            total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-            print(total_reward)
-            #write and store reward_
-            self.env.write_reward(cycle,total_reward)
-            self.list_rewards[cycle] = total_reward
-            # plot_trajectory(batch2, self.env, cycle+1)
+            if ((cycle%params.eval_freq)==0):
+                total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+                print(total_reward)
+                #write and store reward_
+                self.env.write_reward(cycle,total_reward)
+                self.list_rewards[cycle] = total_reward
+                # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
                 self.best_weights = self.list_weights[cycle]
                 self.best_weights_idx = cycle
-        #Save the best policy obtained
-            pw.save(method = "CEM", cycle = cycle,score = total_reward)
+            #Save the best policy obtained
+            if ((cycle%params.save_freq)==0):
+                pw.save(method = "CEM", cycle = cycle,score = total_reward)
 
-
+        pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,score=self.best_reward)
 
 
 
@@ -219,12 +221,13 @@ class Simu:
             self.list_weights[cycle] = policy.get_weights()
 
             # policy evaluation part
-            total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-            print(total_reward)
-            #wrote and store reward
-            self.env.write_reward(cycle,total_reward)
-            self.list_rewards[cycle] = total_reward
-            # plot_trajectory(batch2, self.env, cycle+1)
+            if ((cycle%params.eval_freq)==0):
+                total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+                print(total_reward)
+                #wrote and store reward
+                self.env.write_reward(cycle,total_reward)
+                self.list_rewards[cycle] = total_reward
+                # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
             if self.best_reward < total_reward:
@@ -232,7 +235,10 @@ class Simu:
                 self.best_weights = self.list_weights[cycle]
                 self.best_weights_idx = cycle
         #Save the best policy obtained
-            pw.save(cycle = cycle,score = total_reward)
+            if ((cycle%params.save_freq)==0):
+                pw.save(cycle = cycle,score = total_reward)
+
+        pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
 
     def get_weights_data(self):
         """
