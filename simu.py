@@ -169,7 +169,7 @@ class Simu:
             if ((cycle%params.save_freq)==0):
                 pw.save(method = "CEM", cycle = cycle,score = total_reward)
 
-        pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,score=self.best_reward)
+        pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
 
 
 
