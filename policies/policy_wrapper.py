@@ -36,8 +36,18 @@ class PolicyWrapper:
         directory = os.getcwd() + '/data/policies/'
         name = self.env_name + '#' + method + '#' +str(best_cycle)+'#' +self.team_name + '_' + str(best_score) \
                    + '#' + self.policy_type + '#' + str(self.max_steps)+ '#' + str(best_score) + '#'
-        os.rename(directory + name+'.pt', directory + name + "BESTRUN" + '#'+'.pt')
-
+        if os.path.isfile(directory + name+'.pt'):
+            os.rename(directory + name+'.pt', directory + name + "BESTRUN" + '#'+'.pt')
+        else:
+            for file1 in os.listdir(directory):
+                filesplit1 = file1[:-3].split('#')
+                for file2 in os.listdir(directory):
+                    filesplit2 = file2[:-3].split('#')
+                    if filesplit1[6] < filesplit2[6]:
+                        bestfile = file1
+                    else:
+                        bestfile = file2
+            os.rename(directory +bestfile, directory + bestfile[:-3] + "BESTRUNSAVED" + '#'+'.pt')
 
 
     def load(self, filename):

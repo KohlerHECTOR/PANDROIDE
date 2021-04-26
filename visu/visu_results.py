@@ -24,10 +24,14 @@ def plot_data(filename, label):
     data = pd.read_csv(filename, sep=' ', names=list(range(data.shape[1])))
     x1 = list(data.groupby([0]).quantile(0.75)[1])
     x2 = list(data.groupby([0]).quantile(0.25)[1])
+    if (len(set(list(data.iloc[:, 0]))) == len(list(data.iloc[:, 0]))):
+        x_index = list(data.iloc[:, 0])
+    else:
+        x_index = list(range(len(x1)))
     x_mean = list(data.groupby([0]).mean()[1])
     x_std = list(data.groupby([0]).std()[1])
-    plt.plot(x_mean, label=label)
-    plt.fill_between(list(range(len(x1))), x1, x2, alpha=0.25)
+    plt.plot(x_index, x_mean, label=label)
+    plt.fill_between(x_index, x1, x2, alpha=0.25)
     return x_mean, x_std
 
 
