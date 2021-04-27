@@ -73,22 +73,27 @@ def plot_evals_on_segment(args,policies,rewards):
 
 
     means=[]
-    std=[]
+    quantile_25 = []
+    quantile_75 = []
     for policy in all_policies_on_segment:
         scores=evaluate_policy(args,env,policy)
         means.append(scores.mean(axis=0))
-        std.append(scores.std(axis=0))
+        quantile_25.append(scores.quantile(0.25))
+        quantile_75.append(scores.quantile(0.75))
     means=np.array(means)
     means= np.append(rewards[0],means)
     means=np.append(means,rewards[-1])
     # means= np.append(rewards[idx_best-1],means)
     # means=np.append(means,rewards[idx_best])
-    std=np.array(std)
-    std=np.append(0,std)
-    std=np.append(std,0)
+    quantile_25=np.array(quantile_25)
+    quantile_25=np.append(0,quantile_25)
+    quantile_25=np.append(quantile_25,0)
+    quantile_75=np.array(quantile_75)
+    quantile_75=np.append(0,quantile_75)
+    quantile_75=np.append(quantile_75,0)
     markers_on=[0,len(coordinates_on_segment)-1]
     plt.plot(coordinates_on_segment,means,markevery=markers_on,marker = 'o',markersize=12)
-    plt.fill_between(coordinates_on_segment,means+std,means-std,alpha=0.3)
+    plt.fill_between(coordinates_on_segment,quantile_75,quantile_25,alpha=0.3)
     title='new_PG_'+'lr_'+str(args.lr_actor)+'_evals_'+str(args.nb_evals)+'.png'
     plt.savefig(title, format='png')
     plt.show()
