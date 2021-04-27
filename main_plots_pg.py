@@ -96,6 +96,9 @@ def plot_evals_on_segment(args,policies,rewards):
     plt.fill_between(coordinates_on_segment,quantile_75,quantile_25,alpha=0.3)
     title='new_PG_'+'lr_'+str(args.lr_actor)+'_evals_'+str(args.nb_evals)+'.png'
     plt.savefig(title, format='png')
+    plt.ylabel("reward")
+    plt.xlabel("distance to initial policy")
+    plt.title("rewards landscape between two policies")
     plt.show()
 
 
