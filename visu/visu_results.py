@@ -71,18 +71,32 @@ def exploit_reward_full(params) -> None:
     plt.savefig(path + '/../results/rewards_' + make_full_string(params) + '.pdf')
     plt.show()
 
+def exploit_cov_full(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/covariance_" + '.txt', "cem covariance norm ")
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("Covariance Norm")
+    plt.legend(loc="best")
+    plt.savefig(path + '/../results/covariance_' + make_full_string(params) + '.pdf')
+    plt.clf()
+
 def exploit_angles_full(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
     for i in range(len(study)):
-        plot_data(path + "/gradient_angles_" + params.study_name+study[i] + '_' + params.env_name + '.txt', params.study_name +'_'+"gradient_angles " + study[i])
+        for cycle in range(params.nb_cycles):
+            plot_data(path + "/gradient_angles_" +"#"+ str(cycle) +'.txt', params.study_name +'_'+"gradient_angles " )
 
-    plt.title(params.env_name)
-    plt.xlabel("cycle")
-    plt.ylabel("angle")
-    plt.legend(loc="best")
-    plt.savefig(path + '/../results/gradient_angles_' + make_full_string(params) + '.pdf')
-    plt.show()
+            plt.title(params.env_name)
+            plt.xlabel("traj_in_batch")
+            plt.ylabel("angle")
+            plt.legend(loc="best")
+            plt.savefig(path + '/../results/gradient_angles/gradient_angles_'+'#'+str(cycle) + make_full_string(params) + '.pdf')
+            plt.clf()
 
 def exploit_reward_full_comparison(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -98,6 +112,34 @@ def exploit_reward_full_comparison(params) -> None:
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/rewards_' + make_full_string(params) + '.pdf')
     plt.show()
+
+def exploit_angles_global_full(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/angle_" + params.study_name+study[i] + '_' + params.env_name + '.txt', "angles " )
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("Angle")
+    plt.legend(loc="best")
+    plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
+    plt.clf()
+
+def exploit_angles_global_full_comparison(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/angle_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "angles pg")
+        plot_data(path + "/angle_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "angles cem")
+        # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("angles")
+    plt.legend(loc="lower right")
+    plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
+    plt.clf()
 
 
 def exploit_critic_loss_full(params) -> None:
@@ -227,6 +269,7 @@ def plot_results(params) -> None:
     if params.study_name == "pg":
         # exploit_duration_full(params)
         exploit_reward_full(params)
+        exploit_angles_global_full(params)
         exploit_angles_full(params)
         exploit_policy_loss_full(params)
         exploit_critic_loss_full(params)
@@ -234,8 +277,13 @@ def plot_results(params) -> None:
         exploit_nstep(params)
     elif params.study_name == 'cem':
         exploit_reward_full(params)
+        exploit_angles_global_full(params)
+        exploit_cov_full(params)
     elif params.study_name == 'comparison':
         exploit_reward_full_comparison(params)
+        exploit_angles_global_full_comparison(params)
+        exploit_cov_full(params)
+        exploit_angles_full(params)
     elif params.study_name == 'evo_pg':
         exploit_reward_full(params)
 
