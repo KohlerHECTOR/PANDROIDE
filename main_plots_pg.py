@@ -78,8 +78,8 @@ def plot_evals_on_segment(args,policies,rewards):
     for policy in all_policies_on_segment:
         scores=evaluate_policy(args,env,policy)
         means.append(scores.mean(axis=0))
-        quantile_25.append(scores.quantile(0.25))
-        quantile_75.append(scores.quantile(0.75))
+        quantile_25.append(np.quantile(scores, 0.25))
+        quantile_75.append(np.quantile(scores, 0.75))
     means=np.array(means)
     means= np.append(rewards[0],means)
     means=np.append(means,rewards[-1])
