@@ -21,6 +21,13 @@ from policies import GenericNet,BernoulliPolicy, NormalPolicy, SquashedGaussianP
 from arguments import get_args
 from numpy.random import random
 
+def create_data_folders() -> None:
+    """
+    Create folders where to put politics if they are not already there
+    :return: nothing
+    """
+    if not os.path.exists("Models"):
+        os.mkdir("./Models")
 
 def evaluate_policy(params, env, weights):
     policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
@@ -63,6 +70,7 @@ if __name__ == '__main__':
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
     max_action = int(env.action_space.high[0])
+    create_data_folders()
     directory = os.getcwd() + '/Models/'
     policies=load_policies(directory)
 
