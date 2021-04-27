@@ -125,10 +125,10 @@ class Batch:
         """
         do_print = False
         losses = []
+        gradient_vect = [policy.get_weights()]
         gradient_angles = []
         if do_print: print("training data :")
         for j in range(self.size):
-            tmp = policy.get_weights()
             episode = self.episodes[j]
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
@@ -139,13 +139,23 @@ class Batch:
             if do_print: print("reward", reward)
             policy_loss = policy.train_pg(state, action, reward)
             gradient = policy.get_gradient()
-            gradient_angles.append(np.dot(tmp,gradient)/np.linalg.norm(gradient-tmp))
+            gradient_vect.append(gradient)
+            if j >=1:
+                angle = self.get_angle_with_grad(gradient_vect)
+                gradient_angles.append(angle)
             if do_print: print("loss", policy_loss)
             policy_loss = policy_loss.data.numpy()
             mean_loss = policy_loss.mean()
             losses.append(mean_loss)
         if do_print: print("end of training data :")
         return np.array(losses).mean(), gradient_angles
+
+    def get_angle_with_grad(self, gradient_vect):
+        unit_vector_1 = (gradient_vect[-2] - gradient_vect[-3])/np.linalg.norm(gradient_vect[-2] - gradient_vect[-3])
+        unit_vector_2 = (gradient_vect[-1] - gradient_vect[-2])/np.linalg.norm(gradient_vect[-1] - gradient_vect[-2])
+        return np.dot(unit_vector_1,unit_vector_2)
+
+
 
     def train_policy_cem(self, policy, bests_frac):
         """
@@ -315,7 +325,10 @@ class Batch:
             #### MODIF:  transform actions in array, without it the dataset conversion in TensorDataset will crash on MountainCar and CartPole
             action_cp = []
             for i in range(len(action)) :
-                action_cp.append([int(action[i])])
+                try:
+                    action_cp.append([int(action[i])])
+                except ValueError:
+                    action_cp.append([0])
             action = action_cp
             ####
             reward = episode.reward_pool
