@@ -116,6 +116,8 @@ class Simu:
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
         self.list_rewards = np.zeros((int(params.nb_cycles)))
+        self.best_reward = -1e38
+        self.best_weights_idx = 0
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
@@ -142,19 +144,22 @@ class Simu:
             elites_idxs = rewards.argsort()[-elites_nb:]
             elites_weights = [weights[i] for i in elites_idxs]
                 #update the best weights
+            tmp = centroid
             centroid = np.array(elites_weights).mean(axis=0)
             var = np.cov(elites_weights,rowvar=False)+noise
+            self.env.write_cov(cycle, np.linalg.norm(var))
 
                 #print(best_weights)
                 # policy evaluation part
             policy.set_weights(centroid, False)
 
+
             self.list_weights[cycle] = policy.get_weights()
+            self.write_angles_global(cycle)
 
             # policy evaluation part
             if ((cycle%params.eval_freq)==0):
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                print(total_reward)
                 #write and store reward_
                 self.env.write_reward(cycle,total_reward)
                 self.list_rewards[cycle] = total_reward
@@ -170,6 +175,8 @@ class Simu:
                 pw.save(method = "CEM", cycle = cycle,score = total_reward)
 
         pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
+        print("Best reward: ", self.best_reward)
+        print("Best reward iter: ",self.best_weights_idx)
 
 
 
@@ -195,6 +202,8 @@ class Simu:
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
         self.list_rewards = np.zeros((int(params.nb_cycles)))
+        self.best_reward = -1e38
+        self.best_weights_idx = 0
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
@@ -207,6 +216,7 @@ class Simu:
             algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
             algo.prepare_batch(batch)
             policy_loss,gradient_angles = batch.train_policy_td(policy)
+            self.env.write_gradients(gradient_angles,cycle)
 
             # Update the critic
             assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
@@ -219,16 +229,16 @@ class Simu:
 
             # add the new weights to the list of weights
             self.list_weights[cycle] = policy.get_weights()
+            self.write_angles_global(cycle)
 
             # policy evaluation part
             if ((cycle%params.eval_freq)==0):
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                print(total_reward)
                 #wrote and store reward
                 self.env.write_reward(cycle,total_reward)
                 self.list_rewards[cycle] = total_reward
                 # plot_trajectory(batch2, self.env, cycle+1)
-            self.env.write_gradients(gradient_angles)
+
 
             # save best reward agent (no need for averaging if the policy is deterministic)
             if self.best_reward < total_reward:
@@ -240,12 +250,16 @@ class Simu:
                 pw.save(cycle = cycle,score = total_reward)
 
         pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
+        print("Best reward: ", self.best_reward)
+        print("Best reward iter: ",self.best_weights_idx)
 
 
     def train_evo_pg(self,pw, params,policy) -> None:
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
         self.list_rewards = np.zeros((int(params.nb_cycles)))
+        self.best_reward = -1e38
+        self.best_weights_idx = 0
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
@@ -303,7 +317,17 @@ class Simu:
         #Save the best policy obtained
             pw.save(method = "Evo_pg", cycle = cycle,score = total_reward)
 
-
+    def write_angles_global(self,cycle):
+        if cycle == 1:
+            unit_vec_1 = self.list_weights[0]/np.linalg.norm(self.list_weights[0])
+            unit_vec_2 = (self.list_weights[1]-self.list_weights[0])/np.linalg.norm(self.list_weights[1]-self.list_weights[0])
+            angle = np.dot(unit_vec_1,unit_vec_2)
+            self.env.write_angles(cycle, angle)
+        elif cycle > 1:
+            unit_vec_1 = (self.list_weights[cycle-1]-self.list_weights[cycle-2])/np.linalg.norm(self.list_weights[cycle-1]-self.list_weights[cycle-2])
+            unit_vec_2 = (self.list_weights[cycle]-self.list_weights[cycle-1])/np.linalg.norm(self.list_weights[cycle]-self.list_weights[cycle-1])
+            angle = np.dot(unit_vec_1,unit_vec_2)
+            self.env.write_angles(cycle, angle)
 
     def get_weights_data(self):
         """

@@ -139,11 +139,11 @@ class NormalPolicy(GenericNet):
         with torch.no_grad():
             mu, std = self.forward(state)
             if deterministic:
-                return mu.data.numpy().astype(float)
+                return np.clip(mu.data.numpy().astype(float),-2.0, 2.0)
             else:
                 n = Normal(mu, std)
                 action = n.sample()
-            return action.data.numpy().astype(float)
+            return np.clip(action.data.numpy().astype(float),-2.0,2.0)
 
     def train_pg(self, state, action, reward):
         """

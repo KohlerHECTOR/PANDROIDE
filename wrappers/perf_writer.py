@@ -23,7 +23,9 @@ class PerfWriter(gym.Wrapper):
         self.duration_flag = True
         self.duration_file = None
         self.reward_file = None
-        self.gradient_angles_file = None
+        self.gradient_angles_file_names = None
+        self.covariance_file = None
+        self.angle_file = None
 
         self.directory = os.getcwd() + '/data/save/'
         if not os.path.exists(self.directory):
@@ -47,9 +49,16 @@ class PerfWriter(gym.Wrapper):
     def write_reward(self,cycle,reward):
         self.reward_file.write(str(cycle) + ' ' + str(reward) + '\n')
 
-    def write_gradients(self, gradient_angles):
+    def write_angles(self,cycle,angle):
+        self.angle_file.write(str(cycle) + ' ' + str(angle) + '\n')
+
+
+    def write_gradients(self, gradient_angles,cycle):
         for i in range(len(gradient_angles)):
-            self.gradient_angles_file.write(str(i)+' '+str(gradient_angles[i])+ '\n')
+            self.gradient_angles_file_names[cycle].write(str(i)+' '+str(gradient_angles[i])+ '\n')
+
+    def write_cov(self, cycle, cov_norm):
+        self.covariance_file.write(str(cycle)+' '+str(cov_norm)+'\n')
 
 
     def reset(self, **kwargs):
@@ -74,10 +83,17 @@ class PerfWriter(gym.Wrapper):
     def set_duration_flag(self, val):
         self.duration_flag = val
 
-    def set_file_name(self, name):
+    def set_file_name(self, name,nb_cycles = None):
         duration_name = self.directory + "duration_" + name + ".txt"
         self.duration_file = open(duration_name, "w")
         reward_name = self.directory + "reward_" + name + ".txt"
         self.reward_file = open(reward_name, "w")
-        gradient_angles_name = self.directory + "gradient_angles_" + name + ".txt"
-        self.gradient_angles_file = open(gradient_angles_name, "w")
+        angles_name = self.directory + "angle_"+name +".txt"
+        self.angle_file = open(angles_name, "w")
+        if nb_cycles!=None:
+            gradient_angles_names = [self.directory +"gradient_angles_" + "#" + str(cycle) +".txt" for cycle in range(nb_cycles)]
+            self.gradient_angles_file_names = [open(gradient_angles_name, "w") for gradient_angles_name in gradient_angles_names]
+
+        else:
+            covariance_name = self.directory + "covariance_"  + ".txt"
+            self.covariance_file = open(covariance_name, "w")

@@ -25,6 +25,8 @@ def create_data_folders() -> None:
         os.mkdir('./data/policies')
     if not os.path.exists('data/results/'):
         os.mkdir('./data/results')
+    # if not os.path.exists('./data/results/gradients_angles/'):
+    #     os.mkdir('./data/results/gradient_angles/')
 
 def set_files(study_name, env_name):
     """
@@ -103,7 +105,7 @@ def study_pg(params) -> None:
     study = params.gradients
     simu = make_simu_from_params(params)
     for i in range(len(study)):
-        simu.env.set_file_name( 'pg'+study[i] + '_' + simu.env_name )
+        simu.env.set_file_name( 'pg'+study[i] + '_' + simu.env_name,params.nb_cycles)
         policy_loss_file, critic_loss_file = set_files(study[i], simu.env_name)
         print("study : ", study[i])
         for j in range(params.nb_repet):
