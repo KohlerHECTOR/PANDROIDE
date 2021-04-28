@@ -174,12 +174,21 @@ class Simu:
             if ((cycle%params.save_freq)==0):
                 pw.save(method = "CEM", cycle = cycle,score = total_reward)
 
-        pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
+        # pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
         print("Best reward: ", self.best_reward)
         print("Best reward iter: ",self.best_weights_idx)
 
 
 
+    def get_starting_weights(self,pw):
+        directory = os.getcwd() + '/starting_policy/'
+        listdir = os.listdir(directory)
+        policies = []
+        for policy_file in listdir:
+            policy,_ = pw.load(directory+policy_file)
+            policy = policy.get_weights()
+            policies.append(policy)
+        return policies[0]
 
     def train_pg(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0) -> None:
         """
@@ -204,6 +213,10 @@ class Simu:
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
+
+        if params.start_from_policy:
+            starting_weights = self.get_starting_weights(pw)
+            policy.set_weights(starting_weights,False)
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
@@ -234,6 +247,7 @@ class Simu:
             # policy evaluation part
             if ((cycle%params.eval_freq)==0):
                 total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+                print(total_reward)
                 #wrote and store reward
                 self.env.write_reward(cycle,total_reward)
                 self.list_rewards[cycle] = total_reward
@@ -249,7 +263,7 @@ class Simu:
             if ((cycle%params.save_freq)==0):
                 pw.save(cycle = cycle,score = total_reward)
 
-        pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
+        # pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
         print("Best reward: ", self.best_reward)
         print("Best reward iter: ",self.best_weights_idx)
 

@@ -56,5 +56,9 @@ if __name__ == '__main__':
         print(distances[i])
     plt.plot(range(len(distances)),distances,label=str(args.lr_actor))
 
-    title='PG_DISTANCES_'+'lr_'+str(args.lr_actor)+'_evals_'+str(args.nb_evals)+'.png'
-    plt.savefig(title, format='png')
+    plt.ylabel("distance")
+    plt.xlabel("policy")
+    plt.title("distance between successive policies")
+    title="PG_zoom_distance.pdf"
+    plt.savefig(title, format='pdf')
+    plt.show()
