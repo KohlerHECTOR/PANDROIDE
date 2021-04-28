@@ -38,7 +38,7 @@ def load_policies(folder):
     listdir = os.listdir(folder)
     policies = []
     for policy_file in listdir:
-        pw = PolicyWrapper(GenericNet(), "", "", "", 0)
+        pw = PolicyWrapper(GenericNet(),0, "", "", "", 0)
         policy,_ = pw.load(directory+policy_file)
         policy = policy.get_weights()
         policies.append(policy)
