@@ -217,30 +217,32 @@ class Simu:
         if params.start_from_policy:
             starting_weights = self.get_starting_weights(pw)
             policy.set_weights(starting_weights,False)
+        # policy.set_weights(np.array(params.sigma*np.random.randn(policy.get_weights_dim(False))),False)
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
 
         for cycle in range(params.nb_cycles):
             batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+            batch.sum_rewards()
 
             # Update the policy
-            batch2 = batch.copy_batch()
-            algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
-            algo.prepare_batch(batch)
+            # batch2 = batch.copy_batch()
+            # algo = Algo(study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
+            # algo.prepare_batch(batch)
             policy_loss,gradient_angles = batch.train_policy_td(policy)
             self.env.write_gradients(gradient_angles,cycle)
 
             # Update the critic
-            assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
-            if params.critic_update_method == "dataset":
-                critic_loss = algo.train_critic_from_dataset(batch2, params)
-            elif params.critic_update_method == "batch":
-                critic_loss = algo.train_critic_from_batch(batch2)
-            critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
+            # assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
+            # if params.critic_update_method == "dataset":
+            #     critic_loss = algo.train_critic_from_dataset(batch2, params)
+            # elif params.critic_update_method == "batch":
+            #     critic_loss = algo.train_critic_from_batch(batch2)
+            # critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
             policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
 
-            # add the new weights to the list of weights
+            add the new weights to the list of weights
             self.list_weights[cycle] = policy.get_weights()
             self.write_angles_global(cycle)
 

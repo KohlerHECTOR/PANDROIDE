@@ -18,8 +18,9 @@ class NormalPolicy(GenericNet):
         self.fc2 = nn.Linear(l2, l3)
         self.fc_mu = nn.Linear(l3, l4)
         self.fc_std = nn.Linear(l3, l4)
+        self.elu = nn.ELU()
         if (learning_rate != None):
-            self.optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate, momentum=0)
+            self.optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         self.s_size = l1
         self.h1_size = l2
         self.h2_size = l3
@@ -116,14 +117,16 @@ class NormalPolicy(GenericNet):
          :return: the resulting pytorch tensor (here the max and standard deviation of a Gaussian probability of action)
          """
         # state_temp=state
+        # print(state)
         state = torch.from_numpy(state).float()
         state = self.relu(self.fc1(state))
         state = self.relu(self.fc2(state))
         mu = self.fc_mu(state)
-        std = self.fc_std(state)
-        # std = 2*np.ones(np.shape(mu.data.numpy().astype(float)))
+        std = self.elu(self.fc_std(state))
+
+
+        # std = 0.2*np.ones(np.shape(mu.data.numpy().astype(float)))
         # std=torch.from_numpy(std).float()
-        # std = torch.absolute(std)
 
 
         # print(mu.data.numpy()) # Note : Can be set to have better results with pg
@@ -139,11 +142,13 @@ class NormalPolicy(GenericNet):
         with torch.no_grad():
             mu, std = self.forward(state)
             if deterministic:
-                return np.clip(mu.data.numpy().astype(float),-2.0, 2.0)
+                return mu.data.numpy().astype(float)
+                # return np.clip(mu.data.numpy().astype(float),-2,2)
             else:
                 n = Normal(mu, std)
                 action = n.sample()
-            return np.clip(action.data.numpy().astype(float),-2.0,2.0)
+                return action.data.numpy().astype(float)
+                # return np.clip(action.data.numpy().astype(float),-2,2)
 
     def train_pg(self, state, action, reward):
         """
@@ -155,11 +160,15 @@ class NormalPolicy(GenericNet):
         """
         action = torch.FloatTensor(action)
 
-        # print(action)
         reward = torch.FloatTensor(reward)
         mu, std = self.forward(state)
+        # print(mu)
+        # print(std)
+
         # Negative score function x reward
         loss = -Normal(mu, std).log_prob(action).sum(dim=-1)*reward
+        if np.isnan(loss.data.numpy().any()):
+            print('bad')
         self.update(loss)
         self.fc1Wgrad=self.fc1.weight.grad.numpy().flatten()
         self.fc1Bgrad=self.fc1.bias.grad.numpy().flatten()
