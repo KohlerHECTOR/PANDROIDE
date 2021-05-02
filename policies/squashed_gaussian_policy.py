@@ -78,7 +78,7 @@ class SquashedGaussianPolicy(GenericNet):
         """
         Returns the current gradient
         """
-        return deepcopy(np.hstack([torch.to_numpy(v.grad).flatten() for v in self.parameters()]))
+        return deepcopy(np.hstack([self.to_numpy(v.grad).flatten() for v in self.parameters()]))
 
     def get_weights_dim(self):
         """

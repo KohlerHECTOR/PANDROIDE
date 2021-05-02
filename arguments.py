@@ -52,6 +52,7 @@ def get_args():
     parser.add_argument('--fix_layers', type=str, default=False, help='only for normal')
     # learning parameters
     parser.add_argument('--start_from_policy', type=bool, default=False, help='only for normal')
+    parser.add_argument('--start_from_same_policy', type=bool, default=False, help='only for normal')
 
     parser.add_argument('--gamma', type=float, default=1, help='discount factor')
     parser.add_argument('--lr_actor', type=float, default=0.0001, help='learning rate of the actor')

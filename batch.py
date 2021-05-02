@@ -137,7 +137,7 @@ class Batch:
             if do_print: print("action", action)
             if do_print: print("reward", reward)
             policy_loss = policy.train_pg(state, action, reward)
-            gradient = policy.get_gradient()
+            gradient = policy.get_grads()
             gradient_vect.append(gradient)
             if j >=1:
                 angle = self.get_angle_with_grad(gradient_vect)

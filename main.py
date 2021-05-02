@@ -41,12 +41,13 @@ def set_files(study_name, env_name):
     critic_loss_file = open(critic_loss_name, "w")
     return policy_loss_file, critic_loss_file
 
-def study_cem(params) -> None:
+def study_cem(params,starting_pol =None) -> None:
     """
     Start a study of CEM algorithms
     :param params: the parameters of the study
     :return: nothing
     """
+    global startPOLICY
     assert params.policy_type in ['squashedGaussian', 'normal'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
@@ -63,39 +64,41 @@ def study_cem(params) -> None:
                 policy =SquashedGaussianPolicy(simu.obs_size, 24, 36, 1)
             if params.policy_type=="normal":
                 policy = NormalPolicy(simu.obs_size, 24, 36, 1)
+            if starting_pol !=None :
+                policy.set_weights(starting_pol[j])
             pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
             #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
             simu.train_cem(pw, params, policy)
                        #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
     chrono.stop()
 
-def study_evo_pg(params) -> None:
-    """
-    Start a study of CEM algorithms
-    :param params: the parameters of the study
-    :return: nothing
-    """
-    assert params.policy_type in ['bernoulli', 'normal'], 'unsupported policy type'
-    chrono = Chrono()
-    # cuda = torch.device('cuda')
-    study = params.gradients
-    simu = make_simu_from_params(params)
-    for i in range(1): #len(study) Only sum here
-        simu.env.set_file_name('evo_pg'+ study[i] + '_' + simu.env_name)
-        print("study : ", study[i])
-        for j in range(params.nb_repet):
-            simu.env.reinit()
-            if params.policy_type == "bernoulli":
-                policy = BernoulliPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
-            if params.policy_type=="normal":
-                policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
-            pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
-            #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
-            simu.train_evo_pg(pw, params, policy)
-                       #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
-    chrono.stop()
+# def study_evo_pg(params) -> None:
+#     """
+#     Start a study of CEM algorithms
+#     :param params: the parameters of the study
+#     :return: nothing
+#     """
+#     assert params.policy_type in ['bernoulli', 'normal'], 'unsupported policy type'
+#     chrono = Chrono()
+#     # cuda = torch.device('cuda')
+#     study = params.gradients
+#     simu = make_simu_from_params(params)
+#     for i in range(1): #len(study) Only sum here
+#         simu.env.set_file_name('evo_pg'+ study[i] + '_' + simu.env_name)
+#         print("study : ", study[i])
+#         for j in range(params.nb_repet):
+#             simu.env.reinit()
+#             if params.policy_type == "bernoulli":
+#                 policy = BernoulliPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+#             if params.policy_type=="normal":
+#                 policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+#             pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
+#             #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
+#             simu.train_evo_pg(pw, params, policy)
+#                        #plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
+#     chrono.stop()
 
-def study_pg(params) -> None:
+def study_pg(params,starting_pol =None) -> None:
     """
     Start a study of the policy gradient algorithms
     :param params: the parameters of the study
@@ -128,6 +131,8 @@ def study_pg(params) -> None:
             elif params.policy_type == "squashedGaussian":
                 policy = SquashedGaussianPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
             # policy = policy.cuda()
+            if starting_pol !=None :
+                policy.set_weights(starting_pol[j])
             pw = PolicyWrapper(policy,j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
             plot_policy(policy, simu.env, True, simu.env_name, study[i], '_ante_', j, plot=False)
 
@@ -149,6 +154,16 @@ def study_pg(params) -> None:
         critic.save_model('data/critics/' + params.env_name + '#' + params.team_name + '#' + study[i] + str(j) + '.pt')
     chrono.stop()
 
+def get_same_starting_policies(params):
+    simu = make_simu_from_params(params)
+    policies = []
+    for i in range(params.nb_repet):
+        if params.policy_type == 'normal':
+            policies.append(NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor).get_weights())
+        else:
+            policies.append(SquashedGaussianPolicy(simu.obs_size, 24, 36, 1, params.lr_actor).get_weights())
+    return policies
+
 if __name__ == '__main__':
     args = get_args()
     print(args)
@@ -162,10 +177,14 @@ if __name__ == '__main__':
     elif args.study_name == 'comparison':
         # print('evo_pg')
         # study_evo_pg(args)
-        print('CEM')
-        study_cem(args)
+        starting_pol = None
+        if args.start_from_same_policy:
+            starting_pol = get_same_starting_policies(args)
         print('PG')
-        study_pg(args)
+        study_pg(args,starting_pol)
+        print('CEM')
+        study_cem(args,starting_pol)
+
         plot_results(args)
     elif args.study_name == 'evo_pg':
         study_evo_pg(args)

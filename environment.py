@@ -53,5 +53,3 @@ def make_env(env_name, policy_type, max_episode_steps, env_obs_space_name=None):
     env = PerfWriter(env)
     print(env)
     return env
-
-

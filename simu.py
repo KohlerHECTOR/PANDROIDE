@@ -121,9 +121,12 @@ class Simu:
         self.best_weights_idx = 0
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
+        if params.start_from_policy:
+            starting_weights = self.get_starting_weights(pw)
+            policy.set_weights(starting_weights)
 
-        #Init the first centroid randomly
-        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim()))
+        #Init the first centroid
+        centroid = policy.get_weights()
         #Set the weights with this random centroid
         policy.set_weights(centroid)
         #Init the noise matrix
@@ -221,7 +224,6 @@ class Simu:
         if params.start_from_policy:
             starting_weights = self.get_starting_weights(pw)
             policy.set_weights(starting_weights)
-        # policy.set_weights(np.array(params.sigma*np.random.randn(policy.get_weights_dim())),False)
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
