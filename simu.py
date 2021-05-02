@@ -112,8 +112,6 @@ class Simu:
         return: nothing
         """
 
-        if params.nb_trajs_cem is not None:
-            params.nb_trajs = params.nb_trajs_cem
         
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
@@ -210,8 +208,7 @@ class Simu:
         :return: nothing
         """
 
-        if params.nb_trajs_pg is not None:
-            params.nb_trajs = params.nb_trajs_pg
+
 
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))

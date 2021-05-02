@@ -51,6 +51,9 @@ def study_cem(params) -> None:
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = params.gradients
+    if params.nb_trajs_cem is not None:
+        params.nb_trajs = params.nb_trajs_cem
+    
     simu = make_simu_from_params(params)
     for i in range(1): #len(study) Only sum here
         simu.env.set_file_name('cem'+ study[i] + '_' + simu.env_name)
@@ -103,6 +106,8 @@ def study_pg(params) -> None:
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = params.gradients
+    if params.nb_trajs_pg is not None:
+        params.nb_trajs = params.nb_trajs_pg
     simu = make_simu_from_params(params)
     for i in range(len(study)):
         simu.env.set_file_name( 'pg'+study[i] + '_' + simu.env_name,params.nb_cycles)
