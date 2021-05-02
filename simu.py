@@ -112,10 +112,10 @@ class Simu:
         return: nothing
         """
 
-        
+
         #Initialize variables
-        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
-        self.best_weights = np.zeros(policy.get_weights_dim(False))
+        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
+        self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
@@ -123,13 +123,13 @@ class Simu:
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
         #Init the first centroid randomly
-        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim()))
         #Set the weights with this random centroid
-        policy.set_weights(centroid, False)
+        policy.set_weights(centroid)
         #Init the noise matrix
-        noise=np.diag(np.ones(policy.get_weights_dim(False))*params.sigma)
+        noise=np.diag(np.ones(policy.get_weights_dim())*params.sigma)
         #Init the covariance matrix
-        var=np.diag(np.ones(policy.get_weights_dim(False))*np.var(centroid))+noise
+        var=np.diag(np.ones(policy.get_weights_dim())*np.var(centroid))+noise
         #Init the rng
         rng = np.random.default_rng()
         #Training Loop
@@ -137,7 +137,7 @@ class Simu:
             rewards = np.zeros(params.population)
             weights=rng.multivariate_normal(centroid, var, params.population)
             for p in range(params.population):
-                policy.set_weights(weights[p], False)
+                policy.set_weights(weights[p])
                 batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
                 rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
 
@@ -152,7 +152,7 @@ class Simu:
 
                 #print(best_weights)
                 # policy evaluation part
-            policy.set_weights(centroid, False)
+            policy.set_weights(centroid)
 
 
             self.list_weights[cycle] = policy.get_weights()
@@ -164,6 +164,7 @@ class Simu:
                 #write and store reward_
                 self.env.write_reward(cycle,total_reward)
                 self.list_rewards[cycle] = total_reward
+                print(total_reward)
                 # plot_trajectory(batch2, self.env, cycle+1)
 
             # save best reward agent (no need for averaging if the policy is deterministic)
@@ -211,16 +212,16 @@ class Simu:
 
 
         #Initialize variables
-        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
-        self.best_weights = np.zeros(policy.get_weights_dim(False))
+        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
+        self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
 
         if params.start_from_policy:
             starting_weights = self.get_starting_weights(pw)
-            policy.set_weights(starting_weights,False)
-        # policy.set_weights(np.array(params.sigma*np.random.randn(policy.get_weights_dim(False))),False)
+            policy.set_weights(starting_weights)
+        # policy.set_weights(np.array(params.sigma*np.random.randn(policy.get_weights_dim())),False)
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
@@ -261,8 +262,8 @@ class Simu:
 
 
     def train_evo_pg(self,pw, params,policy) -> None:
-        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
-        self.best_weights = np.zeros(policy.get_weights_dim(False))
+        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
+        self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
@@ -270,13 +271,13 @@ class Simu:
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
         #Init the first centroid randomly
-        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+        centroid = np.array(params.sigma*np.random.randn(policy.get_weights_dim()))
         #Set the weights with this random centroid
-        policy.set_weights(centroid, False)
+        policy.set_weights(centroid)
         #Init the noise matrix
-        noise=np.diag(np.ones(policy.get_weights_dim(False))*params.sigma)
+        noise=np.diag(np.ones(policy.get_weights_dim())*params.sigma)
         #Init the covariance matrix
-        var=np.diag(np.ones(policy.get_weights_dim(False))*np.var(centroid))+noise
+        var=np.diag(np.ones(policy.get_weights_dim())*np.var(centroid))+noise
         #Init the rng
         rng = np.random.default_rng()
         #Training Loop
@@ -284,7 +285,7 @@ class Simu:
             rewards = np.zeros(params.population)
             weights=rng.multivariate_normal(centroid, var, params.population)
             for p in range(params.population):
-                policy.set_weights(weights[p], False)
+                policy.set_weights(weights[p])
                 batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
                 rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
 
@@ -292,7 +293,7 @@ class Simu:
             elites_idxs = rewards.argsort()[-elites_nb:]
             elites_weights = [weights[i] for i in elites_idxs]
             for i in range(len(elites_weights)):
-                policy.set_weights(elites_weights[i], False)
+                policy.set_weights(elites_weights[i])
                 batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
                 batch.train_policy_td(policy)
                 elites_weights[i] = policy.get_weights()
@@ -303,7 +304,7 @@ class Simu:
 
                 #print(best_weights)
                 # policy evaluation part
-            policy.set_weights(centroid, False)
+            policy.set_weights(centroid)
 
             self.list_weights[cycle] = policy.get_weights()
 
@@ -414,11 +415,11 @@ class Simu:
     #             return total_reward
 
     # def train(self, pw,params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0, is_cem=False):
-    #     all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
+    #     all_weights=np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
     #     print(np.shape(all_weights))
     #     all_rewards=np.zeros(params.nb_cycles)
     #     best_reward=-np.inf
-    #     best_weights=np.zeros(policy.get_weights_dim(False))
+    #     best_weights=np.zeros(policy.get_weights_dim())
     #     fixed=params.fix_layers
     #     idx_best=0
     #     if is_cem == False:
@@ -433,9 +434,9 @@ class Simu:
     #         best_weights=np.zeros(policy.get_weights_dim(fixed))
     #         #random init of the neural network.
     #         #so far, all the layers are initialized with the same gaussian.
-    #         init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim(False)))
+    #         init_weights = np.array(params.sigma*np.random.randn(policy.get_weights_dim()))
     #         #print(np.shape(init_weights))
-    #         #start_weights=np.array(3*np.random.randn(policy.get_weights_dim(False)))
+    #         #start_weights=np.array(3*np.random.randn(policy.get_weights_dim()))
     #         policy.set_weights(init_weights, False)
     #
     #         print(fixed)

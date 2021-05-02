@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as func
 from torch.distributions import Normal
 from policies.generic_net import GenericNet
+from copy import deepcopy
 
 
 LOG_STD_MAX = 2
@@ -31,7 +32,7 @@ class SquashedGaussianPolicy(GenericNet):
     """
       A policy whose probabilistic output is drawn from a squashed Gaussian function
       """
-    def __init__(self, l1, l2, l3, l4, learning_rate):
+    def __init__(self, l1, l2, l3, l4, learning_rate=None):
         super(SquashedGaussianPolicy, self).__init__()
         self.relu = nn.ReLU()
         self.fc1 = nn.Linear(l1, l2)
@@ -39,8 +40,52 @@ class SquashedGaussianPolicy(GenericNet):
         self.fc_mu = nn.Linear(l3, l4)
         self.fc_std = nn.Linear(l3, l4)
         self.tanh_layer = nn.Tanh()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
-    
+        if (learning_rate != None):
+            self.optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
+        self.s_size = l1
+        self.h1_size = l2
+        self.h2_size = l3
+        self.fc_mu_size = l4
+        self.fc_std_size = l4
+
+    def to_numpy(self,var):
+        return var.data.numpy()
+
+    def set_weights(self, params):
+        """
+        Set the params of the network to the given parameters
+        """
+        cpt = 0
+        for param in self.parameters():
+            tmp = np.product(param.size())
+
+            if torch.cuda.is_available():
+                param.data.copy_(torch.from_numpy(
+                    params[cpt:cpt + tmp]).view(param.size()).cuda())
+            else:
+                param.data.copy_(torch.from_numpy(
+                    params[cpt:cpt + tmp]).view(param.size()))
+            cpt += tmp
+
+    def get_weights(self):
+        """
+        Returns parameters of the actor
+        """
+        return deepcopy(np.hstack([self.to_numpy(v).flatten() for v in
+                                   self.parameters()]))
+
+    def get_grads(self):
+        """
+        Returns the current gradient
+        """
+        return deepcopy(np.hstack([torch.to_numpy(v.grad).flatten() for v in self.parameters()]))
+
+    def get_weights_dim(self):
+        """
+        Returns the number of parameters of the network
+        """
+        return self.get_weights().shape[0]
+
     def forward(self, state):
         """
         Compute the pytorch tensors resulting from sending a state or vector of states through the policy network
@@ -133,3 +178,47 @@ class SquashedGaussianPolicy(GenericNet):
             state = np.array(episode.state_pool)
             action = np.array(episode.action_pool)
             self.train_regress(state, action)
+
+    # def set_weights(self, weights, fix_layers=False):
+    #     if fix_layers: # last layers weights
+    #         h2_size = self.h2_size
+    #         fc_mu_size = self.fc_mu_size
+    #         fc_std_size = self.fc_std_size
+    #         fc_mu_end= (h2_size*fc_mu_size)+fc_mu_size
+    #         fc_mu_W = torch.from_numpy(weights[:(h2_size*fc_mu_size)].reshape(h2_size, fc_mu_size))
+    #         fc_mu_b = torch.from_numpy(weights[(h2_size*fc_mu_size):fc_mu_end])
+    #         fc_std_W = torch.from_numpy(weights[fc_mu_end:fc_mu_end+(h2_size*fc_std_size)].reshape(h2_size, fc_std_size))
+    #         fc_std_b = torch.from_numpy(weights[fc_mu_end+(h2_size*fc_std_size):])
+    #         self.fc_mu.weight.data.copy_(fc_mu_W.view_as(self.fc_mu.weight.data))
+    #         self.fc_mu.bias.data.copy_(fc_mu_b.view_as(self.fc_mu.bias.data))
+    #         self.fc_std.weight.data.copy_(fc_std_W.view_as(self.fc_std.weight.data))
+    #         self.fc_std.bias.data.copy_(fc_std_b.view_as(self.fc_std.bias.data))
+    #     else:
+    #         s_size = self.s_size
+    #         h1_size = self.h1_size
+    #         h2_size = self.h2_size
+    #         fc_mu_size = self.fc_mu_size
+    #         fc_std_size = self.fc_std_size
+    #         # separate the weights for each layer
+    #         fc1_end = (s_size*h1_size)+h1_size
+    #         fc1_W = torch.from_numpy(weights[:s_size*h1_size].reshape(s_size, h1_size))
+    #         fc1_b = torch.from_numpy(weights[s_size*h1_size:fc1_end])
+    #         fc2_end = fc1_end+(h1_size*h2_size)+h2_size
+    #         fc2_W = torch.from_numpy(weights[fc1_end:fc1_end+(h1_size*h2_size)].reshape(h1_size, h2_size))
+    #         fc2_b = torch.from_numpy(weights[fc1_end+(h1_size*h2_size):fc2_end])
+    #         fc_mu_end=fc2_end+(h2_size*fc_mu_size)+fc_mu_size
+    #         fc_mu_W = torch.from_numpy(weights[fc2_end:fc2_end+(h2_size*fc_mu_size)].reshape(h2_size, fc_mu_size))
+    #         fc_mu_b = torch.from_numpy(weights[fc2_end+(h2_size*fc_mu_size):fc_mu_end])
+    #         fc_std_W = torch.from_numpy(weights[fc_mu_end:fc_mu_end+(h2_size*fc_std_size)].reshape(h2_size, fc_std_size))
+    #         fc_std_b = torch.from_numpy(weights[fc_mu_end+(h2_size*fc_std_size):])
+    #         # set the weights for each layer
+    #         self.fc1.weight.data.copy_(fc1_W.view_as(self.fc1.weight.data))
+    #         self.fc1.bias.data.copy_(fc1_b.view_as(self.fc1.bias.data))
+    #         self.fc2.weight.data.copy_(fc2_W.view_as(self.fc2.weight.data))
+    #         self.fc2.bias.data.copy_(fc2_b.view_as(self.fc2.bias.data))
+    #         self.fc_mu.weight.data.copy_(fc_mu_W.view_as(self.fc_mu.weight.data))
+    #         self.fc_mu.bias.data.copy_(fc_mu_b.view_as(self.fc_mu.bias.data))
+    #         self.fc_std.weight.data.copy_(fc_std_W.view_as(self.fc_std.weight.data))
+    #         self.fc_std.bias.data.copy_(fc_std_b.view_as(self.fc_std.bias.data))
+    # def get_weights(self):
+    #     return torch.nn.utils.parameters_to_vector(self.parameters()).detach().cpu().numpy()

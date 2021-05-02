@@ -47,21 +47,20 @@ def study_cem(params) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['bernoulli', 'normal'], 'unsupported policy type'
+    assert params.policy_type in ['squashedGaussian', 'normal'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = params.gradients
     if params.nb_trajs_cem is not None:
         params.nb_trajs = params.nb_trajs_cem
-    
     simu = make_simu_from_params(params)
     for i in range(1): #len(study) Only sum here
         simu.env.set_file_name('cem'+ study[i] + '_' + simu.env_name)
         print("study : ", study[i])
         for j in range(params.nb_repet):
             simu.env.reinit()
-            if params.policy_type == "bernoulli":
-                policy = BernoulliPolicy(simu.obs_size, 24, 36, 1)
+            if params.policy_type == "squashedGaussian":
+                policy =SquashedGaussianPolicy(simu.obs_size, 24, 36, 1)
             if params.policy_type=="normal":
                 policy = NormalPolicy(simu.obs_size, 24, 36, 1)
             pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
