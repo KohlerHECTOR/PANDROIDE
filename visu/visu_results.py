@@ -281,13 +281,13 @@ def plot_results(params) -> None:
         exploit_nstep(params)
     elif params.study_name == 'cem':
         exploit_reward_full(params)
-        exploit_angles_global_full(params)
+        # exploit_angles_global_full(params)
         exploit_cov_full(params)
     elif params.study_name == 'comparison':
         exploit_reward_full_comparison(params)
-        exploit_angles_global_full_comparison(params)
+        # exploit_angles_global_full_comparison(params)
         exploit_cov_full(params)
-        exploit_angles_full(params)
+        # exploit_angles_full(params)
         exploit_policy_loss_full(params)
     elif params.study_name == 'evo_pg':
         exploit_reward_full(params)

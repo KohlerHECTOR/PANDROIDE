@@ -112,6 +112,9 @@ class Simu:
         return: nothing
         """
 
+        if params.nb_trajs_cem is not None:
+            params.nb_trajs = params.nb_trajs_cem
+        
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
@@ -206,6 +209,9 @@ class Simu:
         :param beta: a specific parameter for beta-parametrized values
         :return: nothing
         """
+
+        if params.nb_trajs_pg is not None:
+            params.nb_trajs = params.nb_trajs_pg
 
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))

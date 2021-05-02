@@ -18,7 +18,7 @@ class NormalPolicy(GenericNet):
         self.fc2 = nn.Linear(l2, l3)
         self.fc_mu = nn.Linear(l3, l4)
         self.fc_std = nn.Linear(l3, l4)
-        self.elu = nn.ELU()
+        self.sigmoid = nn.Sigmoid()
         if (learning_rate != None):
             self.optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         self.s_size = l1
@@ -122,8 +122,7 @@ class NormalPolicy(GenericNet):
         state = self.relu(self.fc1(state))
         state = self.relu(self.fc2(state))
         mu = self.fc_mu(state)
-        std = self.elu(self.fc_std(state))
-
+        std = self.sigmoid(self.fc_std(state))
 
         # std = 0.2*np.ones(np.shape(mu.data.numpy().astype(float)))
         # std=torch.from_numpy(std).float()
