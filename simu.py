@@ -112,6 +112,9 @@ class Simu:
         return: nothing
         """
 
+        if params.nb_trajs_cem is not None:
+            params.nb_trajs = params.nb_trajs_cem
+        
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
@@ -207,6 +210,9 @@ class Simu:
         :return: nothing
         """
 
+        if params.nb_trajs_pg is not None:
+            params.nb_trajs = params.nb_trajs_pg
+
         #Initialize variables
         self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim(False)))
         self.best_weights = np.zeros(policy.get_weights_dim(False))
@@ -242,7 +248,7 @@ class Simu:
             # critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
             policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
 
-            add the new weights to the list of weights
+            # add the new weights to the list of weights
             self.list_weights[cycle] = policy.get_weights()
             self.write_angles_global(cycle)
 
