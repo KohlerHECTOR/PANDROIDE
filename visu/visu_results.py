@@ -145,6 +145,21 @@ def exploit_angles_global_full_comparison(params) -> None:
     plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
     plt.clf()
 
+def exploit_distance(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/distance_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "distance pg")
+        plot_data(path + "/distance_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "distance cem")
+        # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("distance")
+    plt.legend(loc="lower right")
+    plt.savefig(path + '/../results/distances_' + make_full_string(params) + '.pdf')
+    plt.clf()
+
 
 def exploit_critic_loss_full(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -273,7 +288,7 @@ def plot_results(params) -> None:
     if params.study_name == "pg":
         # exploit_duration_full(params)
         exploit_reward_full(params)
-        # exploit_angles_global_full(params)
+        exploit_angles_global_full(params)
         # exploit_angles_full(params)
         exploit_policy_loss_full(params)
         # exploit_critic_loss_full(params)
@@ -281,13 +296,14 @@ def plot_results(params) -> None:
         exploit_nstep(params)
     elif params.study_name == 'cem':
         exploit_reward_full(params)
-        # exploit_angles_global_full(params)
+        exploit_angles_global_full(params)
         exploit_cov_full(params)
     elif params.study_name == 'comparison':
         exploit_reward_full_comparison(params)
         exploit_angles_global_full_comparison(params)
         exploit_cov_full(params)
-        exploit_angles_full(params)
+        exploit_distance(params)
+        # exploit_angles_full(params)
         exploit_policy_loss_full(params)
     elif params.study_name == 'evo_pg':
         exploit_reward_full(params)

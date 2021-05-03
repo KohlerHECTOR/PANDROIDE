@@ -47,7 +47,6 @@ def study_cem(params,starting_pol =None) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    global startPOLICY
     assert params.policy_type in ['squashedGaussian', 'normal'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')

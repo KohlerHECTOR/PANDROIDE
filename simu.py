@@ -114,7 +114,7 @@ class Simu:
 
 
         #Initialize variables
-        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
+        self.list_weights = []
         self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
@@ -127,6 +127,7 @@ class Simu:
 
         #Init the first centroid
         centroid = policy.get_weights()
+        self.list_weights.append(centroid)
         #Set the weights with this random centroid
         policy.set_weights(centroid)
         #Init the noise matrix
@@ -152,13 +153,15 @@ class Simu:
             centroid = np.array(elites_weights).mean(axis=0)
             var = np.cov(elites_weights,rowvar=False)+noise
             self.env.write_cov(cycle, np.linalg.norm(var))
+            distance = np.linalg.norm(centroid - self.list_weights[-1])
+            self.env.write_distances(cycle, distance)
 
                 #print(best_weights)
                 # policy evaluation part
             policy.set_weights(centroid)
 
 
-            self.list_weights[cycle] = policy.get_weights()
+            self.list_weights.append(policy.get_weights())
             self.write_angles_global(cycle)
 
             # policy evaluation part
@@ -173,7 +176,7 @@ class Simu:
             # save best reward agent (no need for averaging if the policy is deterministic)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
-                self.best_weights = self.list_weights[cycle]
+                self.best_weights = self.list_weights[-1]
                 self.best_weights_idx = cycle
             #Save the best policy obtained
             if ((cycle%params.save_freq)==0):
@@ -215,11 +218,13 @@ class Simu:
 
 
         #Initialize variables
-        self.list_weights = np.zeros((int(params.nb_cycles),policy.get_weights_dim()))
+        self.list_weights = []
         self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
+
+        self.list_weights.append(policy.get_weights())
 
         if params.start_from_policy:
             starting_weights = self.get_starting_weights(pw)
@@ -232,11 +237,13 @@ class Simu:
             batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
             batch.sum_rewards()
             policy_loss,gradient_angles = batch.train_policy_td(policy)
-            self.env.write_gradients(gradient_angles,cycle)
+            # self.env.write_gradients(gradient_angles,cycle)
             policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
 
             # add the new weights to the list of weights
-            self.list_weights[cycle] = policy.get_weights()
+            self.list_weights.append(policy.get_weights())
+            distance = np.linalg.norm(self.list_weights[-1]-self.list_weights[-2])
+            self.env.write_distances(cycle,distance)
             self.write_angles_global(cycle)
 
             # policy evaluation part
@@ -252,7 +259,7 @@ class Simu:
             # save best reward agent (no need for averaging if the policy is deterministic)
             if self.best_reward < total_reward:
                 self.best_reward = total_reward
-                self.best_weights = self.list_weights[cycle]
+                self.best_weights = self.list_weights[-1]
                 self.best_weights_idx = cycle
         #Save the best policy obtained
             if ((cycle%params.save_freq)==0):

@@ -26,6 +26,7 @@ class PerfWriter(gym.Wrapper):
         self.gradient_angles_file_names = None
         self.covariance_file = None
         self.angle_file = None
+        self.distance_file = None
 
         self.directory = os.getcwd() + '/data/save/'
         if not os.path.exists(self.directory):
@@ -51,6 +52,8 @@ class PerfWriter(gym.Wrapper):
 
     def write_angles(self,cycle,angle):
         self.angle_file.write(str(cycle) + ' ' + str(angle) + '\n')
+    def write_distances(self,cycle,distance):
+        self.distance_file.write(str(cycle) + ' ' + str(distance) + '\n')
 
 
     def write_gradients(self, gradient_angles,cycle):
@@ -97,3 +100,5 @@ class PerfWriter(gym.Wrapper):
         else:
             covariance_name = self.directory + "covariance_"  + ".txt"
             self.covariance_file = open(covariance_name, "w")
+        distances_name = self.directory + "distance_"+name +".txt"
+        self.distance_file = open(distances_name, "w")
