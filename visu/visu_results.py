@@ -164,7 +164,7 @@ def exploit_distance_solo(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
     for i in range(len(study)):
-        plot_data(path + "/distance_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "distance pg")
+        plot_data(path + "/reward_" + params.study_name+study[i] + '_' + params.env_name + '.txt', "distance")
         # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
 
     plt.title(params.env_name)
@@ -312,6 +312,7 @@ def plot_results(params) -> None:
     elif params.study_name == 'cem':
         exploit_reward_full(params)
         exploit_angles_global_full(params)
+        exploit_distance_solo(params)
         exploit_cov_full(params)
     elif params.study_name == 'comparison':
         exploit_reward_full_comparison(params)
