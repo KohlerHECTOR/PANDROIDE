@@ -160,6 +160,20 @@ def exploit_distance(params) -> None:
     plt.savefig(path + '/../results/distances_' + make_full_string(params) + '.pdf')
     plt.clf()
 
+def exploit_distance_solo(params) -> None:
+    path = os.getcwd() + "/data/save"
+    study = params.gradients
+    for i in range(len(study)):
+        plot_data(path + "/distance_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "distance pg")
+        # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
+
+    plt.title(params.env_name)
+    plt.xlabel("Episodes")
+    plt.ylabel("distance")
+    plt.legend(loc="lower right")
+    plt.savefig(path + '/../results/distances_' + make_full_string(params) + '.pdf')
+    plt.clf()
+
 
 def exploit_critic_loss_full(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -289,8 +303,9 @@ def plot_results(params) -> None:
         # exploit_duration_full(params)
         exploit_reward_full(params)
         exploit_angles_global_full(params)
-        # exploit_angles_full(params)
+        exploit_distance_solo(params)
         exploit_policy_loss_full(params)
+        exploit_distance(params)
         # exploit_critic_loss_full(params)
     elif params.study_name == "nstep":
         exploit_nstep(params)
