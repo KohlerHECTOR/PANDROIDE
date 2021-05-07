@@ -126,7 +126,11 @@ class Simu:
             policy.set_weights(starting_weights)
 
         #Init the first centroid
-        centroid = policy.get_weights()
+        if params.start_from_same_policy:
+            centroid = policy.get_weights()
+            pw.save(cycle = -1,score = self.evaluate_episode(policy, params.deterministic_eval, params))
+        else:
+            centroid = np.random.rand(policy.get_weights_dim())
         self.list_weights.append(centroid)
         #Set the weights with this random centroid
         policy.set_weights(centroid)
@@ -232,6 +236,7 @@ class Simu:
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
 
+        pw.save(cycle = -1,score = self.evaluate_episode(policy, params.deterministic_eval, params))
 
         for cycle in range(params.nb_cycles):
             batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
