@@ -10,6 +10,8 @@ import os
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import torch
+from progress.bar import Bar
+from slowBar import SlowBar
 
 def make_simu_from_params(params):
     """
@@ -120,71 +122,83 @@ class Simu:
         self.best_reward = -1e38
         self.best_weights_idx = 0
 
-        print("Shape of weights vector is: ", np.shape(self.best_weights))
+        print("Shape of weights vector is: ",policy.get_weights_dim())
+
+
         if params.start_from_policy:
             starting_weights = self.get_starting_weights(pw)
-            policy.set_weights(starting_weights)
+            centroid = starting_weights
+
 
         #Init the first centroid
-        if params.start_from_same_policy:
+        elif params.start_from_same_policy:
             centroid = policy.get_weights()
-            pw.save(cycle = -1,score = self.evaluate_episode(policy, params.deterministic_eval, params))
         else:
             centroid = np.random.rand(policy.get_weights_dim())
+
+
+        policy.set_weights(centroid)
+        initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
+        pw.save(cycle = 0,score = initial_score)
+        self.env.write_reward(cycle = 0, reward = initial_score)
         self.list_weights.append(centroid)
         #Set the weights with this random centroid
-        policy.set_weights(centroid)
+
         #Init the noise matrix
         noise=np.diag(np.ones(policy.get_weights_dim())*params.sigma)
+        # noise=np.diag(np.zeros(policy.get_weights_dim())*params.sigma)
         #Init the covariance matrix
         var=np.diag(np.ones(policy.get_weights_dim())*np.var(centroid))+noise
+        # var=np.diag(np.ones(policy.get_weights_dim())*params.lr_actor**2)+noise
         #Init the rng
         rng = np.random.default_rng()
         #Training Loop
-        for cycle in range(params.nb_cycles):
-            rewards = np.zeros(params.population)
-            weights=rng.multivariate_normal(centroid, var, params.population)
-            for p in range(params.population):
-                policy.set_weights(weights[p])
-                batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
-                rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
+        with SlowBar('Performing a repetition of CEM', max=params.nb_cycles) as bar:
+            for cycle in range(params.nb_cycles):
+                rewards = np.zeros(params.population)
+                weights=rng.multivariate_normal(centroid, var, params.population)
+                for p in range(params.population):
+                    policy.set_weights(weights[p])
+                    batch=self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
+                    rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
 
-            elites_nb = int(params.elites_frac * params.population)
-            elites_idxs = rewards.argsort()[-elites_nb:]
-            elites_weights = [weights[i] for i in elites_idxs]
-                #update the best weights
-            tmp = centroid
-            centroid = np.array(elites_weights).mean(axis=0)
-            var = np.cov(elites_weights,rowvar=False)+noise
-            self.env.write_cov(cycle, np.linalg.norm(var))
-            distance = np.linalg.norm(centroid - self.list_weights[-1])
-            self.env.write_distances(cycle, distance)
+                elites_nb = int(params.elites_frac * params.population)
+                elites_idxs = rewards.argsort()[-elites_nb:]
+                elites_weights = [weights[i] for i in elites_idxs]
+                    #update the best weights
+                tmp = centroid
+                centroid = np.array(elites_weights).mean(axis=0)
+                var = np.cov(elites_weights,rowvar=False)+noise
+                self.env.write_cov(cycle, np.linalg.norm(var))
+                distance = np.linalg.norm(centroid - self.list_weights[-1])
+                self.env.write_distances(cycle, distance)
 
-                #print(best_weights)
+                    #print(best_weights)
+                    # policy evaluation part
+                policy.set_weights(centroid)
+
+
+                self.list_weights.append(policy.get_weights())
+                self.write_angles_global(cycle)
+
                 # policy evaluation part
-            policy.set_weights(centroid)
+                if ((cycle%params.eval_freq)==0):
+                    total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+                    #write and store reward_
+                    self.env.write_reward(cycle+1,total_reward)
+                    self.list_rewards[cycle] = total_reward
+                    # print(total_reward)
+                    # plot_trajectory(batch2, self.env, cycle+1)
 
-
-            self.list_weights.append(policy.get_weights())
-            self.write_angles_global(cycle)
-
-            # policy evaluation part
-            if ((cycle%params.eval_freq)==0):
-                total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                #write and store reward_
-                self.env.write_reward(cycle,total_reward)
-                self.list_rewards[cycle] = total_reward
-                print(total_reward)
-                # plot_trajectory(batch2, self.env, cycle+1)
-
-            # save best reward agent (no need for averaging if the policy is deterministic)
-            if self.best_reward < total_reward:
-                self.best_reward = total_reward
-                self.best_weights = self.list_weights[-1]
-                self.best_weights_idx = cycle
-            #Save the best policy obtained
-            if ((cycle%params.save_freq)==0):
-                pw.save(method = "CEM", cycle = cycle,score = total_reward)
+                # save best reward agent (no need for averaging if the policy is deterministic)
+                if self.best_reward < total_reward:
+                    self.best_reward = total_reward
+                    self.best_weights = self.list_weights[-1]
+                    self.best_weights_idx = cycle
+                #Save the best policy obtained
+                if ((cycle%params.save_freq)==0):
+                    pw.save(method = "CEM", cycle = cycle+1,score = total_reward)
+                bar.next()
 
         # pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
         print("Best reward: ", self.best_reward)
@@ -235,40 +249,42 @@ class Simu:
             policy.set_weights(starting_weights)
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
+        initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
+        pw.save(cycle = 0,score = initial_score)
+        self.env.write_reward(cycle = 0, reward =  initial_score)
+        with SlowBar('Performing a repetition of PG', max=params.nb_cycles) as bar:
+            for cycle in range(params.nb_cycles):
+                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+                batch.sum_rewards()
+                policy_loss = batch.train_policy_td(policy)
+                # self.env.write_gradients(gradient_angles,cycle)
+                policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
 
-        pw.save(cycle = -1,score = self.evaluate_episode(policy, params.deterministic_eval, params))
+                # add the new weights to the list of weights
+                self.list_weights.append(policy.get_weights())
+                distance = np.linalg.norm(self.list_weights[-1]-self.list_weights[-2])
+                self.env.write_distances(cycle,distance)
+                self.write_angles_global(cycle)
 
-        for cycle in range(params.nb_cycles):
-            batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
-            batch.sum_rewards()
-            policy_loss,gradient_angles = batch.train_policy_td(policy)
-            # self.env.write_gradients(gradient_angles,cycle)
-            policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
-
-            # add the new weights to the list of weights
-            self.list_weights.append(policy.get_weights())
-            distance = np.linalg.norm(self.list_weights[-1]-self.list_weights[-2])
-            self.env.write_distances(cycle,distance)
-            self.write_angles_global(cycle)
-
-            # policy evaluation part
-            if ((cycle%params.eval_freq)==0):
-                total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                print(total_reward)
-                #wrote and store reward
-                self.env.write_reward(cycle,total_reward)
-                self.list_rewards[cycle] = total_reward
-                # plot_trajectory(batch2, self.env, cycle+1)
+                # policy evaluation part
+                if ((cycle%params.eval_freq)==0):
+                    total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
+                    # print(total_reward)
+                    #wrote and store reward
+                    self.env.write_reward(cycle+1,total_reward)
+                    self.list_rewards[cycle] = total_reward
+                    # plot_trajectory(batch2, self.env, cycle+1)
 
 
-            # save best reward agent (no need for averaging if the policy is deterministic)
-            if self.best_reward < total_reward:
-                self.best_reward = total_reward
-                self.best_weights = self.list_weights[-1]
-                self.best_weights_idx = cycle
-        #Save the best policy obtained
-            if ((cycle%params.save_freq)==0):
-                pw.save(cycle = cycle,score = total_reward)
+                # save best reward agent (no need for averaging if the policy is deterministic)
+                if self.best_reward < total_reward:
+                    self.best_reward = total_reward
+                    self.best_weights = self.list_weights[-1]
+                    self.best_weights_idx = cycle
+            #Save the best policy obtained
+                if ((cycle%params.save_freq)==0):
+                    pw.save(cycle = cycle+1,score = total_reward)
+                bar.next()
 
         # pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
         print("Best reward: ", self.best_reward)
@@ -324,7 +340,7 @@ class Simu:
 
             # policy evaluation part
             total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-            print(total_reward)
+            # print(total_reward)
             #write and store reward_
             self.env.write_reward(cycle,total_reward)
             self.list_rewards[cycle] = total_reward

@@ -125,8 +125,8 @@ class Batch:
         """
         do_print = False
         losses = []
-        gradient_vect = [policy.get_weights()]
-        gradient_angles = []
+        # gradient_vect = [policy.get_weights()]
+        # gradient_angles = []
         if do_print: print("training data :")
         for j in range(self.size):
             episode = self.episodes[j]
@@ -137,17 +137,17 @@ class Batch:
             if do_print: print("action", action)
             if do_print: print("reward", reward)
             policy_loss = policy.train_pg(state, action, reward)
-            gradient = policy.get_grads()
-            gradient_vect.append(gradient)
-            if j >=1:
-                angle = self.get_angle_with_grad(gradient_vect)
-                gradient_angles.append(angle)
+            # gradient = policy.get_grads()
+            # gradient_vect.append(gradient)
+            # if j >=1:
+            #     angle = self.get_angle_with_grad(gradient_vect)
+            #     gradient_angles.append(angle)
             if do_print: print("loss", policy_loss)
             policy_loss = policy_loss.data.numpy()
             mean_loss = policy_loss.mean()
             losses.append(mean_loss)
         if do_print: print("end of training data :")
-        return np.array(losses).mean(), gradient_angles
+        return np.array(losses).mean()#, gradient_angles
 
     def get_angle_with_grad(self, gradient_vect):
         unit_vector_1 = (gradient_vect[-2] - gradient_vect[-3])/np.linalg.norm(gradient_vect[-2] - gradient_vect[-3])

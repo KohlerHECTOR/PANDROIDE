@@ -95,10 +95,11 @@ def plot_evals_on_segment(args,policies,rewards):
     plt.plot(coordinates_on_segment,means,markevery=markers_on,marker = 'o',markersize=12)
     plt.fill_between(coordinates_on_segment,quantile_75,quantile_25,alpha=0.3)
     title="CEM_landscape_best_bestplus1.pdf"
-    plt.savefig(title, format='pdf')
+    
     plt.ylabel("reward")
     plt.xlabel("distance to initial policy")
     plt.title("rewards landscape between two policies")
+    plt.savefig(title, format='pdf')
     plt.show()
 
 

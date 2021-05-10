@@ -179,8 +179,10 @@ if __name__ == '__main__':
         starting_pol = None
         if args.start_from_same_policy:
             starting_pol = get_same_starting_policies(args)
+
         print('PG')
         study_pg(args,starting_pol)
+
         print('CEM')
         study_cem(args,starting_pol)
 

@@ -38,13 +38,13 @@ class PerfWriter(gym.Wrapper):
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
-        self.duration += 1
-        self.total_reward += reward
-        if done:
-            if self.reward_flag:
-                self.reward_file.write(str(self.num_episode) + ' ' + str(self.total_reward) + '\n')
-            if self.duration_flag:
-                self.duration_file.write(str(self.num_episode) + ' ' + str(self.duration) + '\n')
+        # self.duration += 1
+        # self.total_reward += reward
+        # if done:
+        #     if self.reward_flag:
+        #         self.reward_file.write(str(self.num_episode) + ' ' + str(self.total_reward) + '\n')
+        #     if self.duration_flag:
+        #         self.duration_file.write(str(self.num_episode) + ' ' + str(self.duration) + '\n')
         return observation, reward, done, info
 
     def write_reward(self,cycle,reward):
@@ -86,18 +86,17 @@ class PerfWriter(gym.Wrapper):
     def set_duration_flag(self, val):
         self.duration_flag = val
 
-    def set_file_name(self, name,nb_cycles = None):
+    def set_file_name(self, name, nb_cycles = None):
         duration_name = self.directory + "duration_" + name + ".txt"
         self.duration_file = open(duration_name, "w")
         reward_name = self.directory + "reward_" + name + ".txt"
         self.reward_file = open(reward_name, "w")
         angles_name = self.directory + "angle_"+name +".txt"
         self.angle_file = open(angles_name, "w")
-        if nb_cycles!=None:
-            gradient_angles_names = [self.directory +"gradient_angles_" + "#" + str(cycle) +".txt" for cycle in range(nb_cycles)]
-            self.gradient_angles_file_names = [open(gradient_angles_name, "w") for gradient_angles_name in gradient_angles_names]
-
-        else:
+        # if nb_cycles!=None:
+        #     gradient_angles_names = [self.directory +"gradient_angles_" + "#" + str(cycle) +".txt" for cycle in range(nb_cycles)]
+        #     self.gradient_angles_file_names = [open(gradient_angles_name, "w") for gradient_angles_name in gradient_angles_names]
+        if nb_cycles == None:
             covariance_name = self.directory + "covariance_"  + ".txt"
             self.covariance_file = open(covariance_name, "w")
         distances_name = self.directory + "distance_"+name +".txt"
