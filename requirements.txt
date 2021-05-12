@@ -9,3 +9,5 @@ scour==0.36
 seaborn==0.10.1
 simplejson==3.13.2
 torch==1.6.0
+ray==1.3.0
+ray'[default]'==1.3.0

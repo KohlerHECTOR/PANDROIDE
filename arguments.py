@@ -29,6 +29,8 @@ def get_args():
     :return: the complete list of arguments
     """
     parser = argparse.ArgumentParser()
+    # multi-threading setting ##UNSTABLE
+    parser.add_argument('--multi_threading', type=str, default=False, help='multi-threading for high number of evaluations')
     # environment setting
     parser.add_argument('--env_name', type=str, default='Pendulum-v0', help='the environment name')
     parser.add_argument('--env_obs_space_name', type=str, default=["pos", "angle"])  # ["pos", "angle", "vx", "v angle"]

@@ -66,6 +66,7 @@ class SavedVignette:
 		img = self.plot2D() if img is None else img
 		img.save(filename, format='png')
 
+	@checkFormat('.pdf')
 	def save3D(self, filename, elevs=[30], angles=[0]):
 		"""
 		Save the Vignette as a 3D image
@@ -74,7 +75,7 @@ class SavedVignette:
 			for angle in angles:
 				self.ax.view_init(elev, angle)
 				plt.draw()
-				plt.savefig(filename+'_e{}_a{}.png'.format(elev,angle), format='png')
+				plt.savefig(filename+'_e{}_a{}.pdf'.format(elev,angle), format='pdf')
 
 	def saveAll(self, filename, saveInFile=False, save2D=False, save3D=False,
 								directoryFile="SavedVignette", directory2D="Vignette_output", directory3D="Vignette_output",
@@ -94,12 +95,13 @@ class SavedVignette:
 		"""
 		color1, color2 = self.color1 if color1 is None else color1, self.color2 if color2 is None else color2
 
-		width, height = self.pixelWidth * len(self.lines[-1]), self.pixelHeight * (len(self.lines) + len(self.policyDistance) + len(self.baseLines) + 1)
+		width, height = self.pixelWidth * len(self.lines[-1]), self.pixelHeight * (len(self.lines))
+		#width, height = self.pixelWidth * len(self.lines[-1]), self.pixelHeight * (len(self.lines) + len(self.policyDistance) + len(self.baseLines) + 1)
 		newIm = Image.new("RGB",(width, height))
 		newDraw = ImageDraw.Draw(newIm)
 
-		maxColor=-2000
-		minColor=0
+		maxColor=-100
+		minColor=-1900
 		for l in range(len(self.lines)):
 			for c in range(len(self.lines[l])):
 				if self.lines[l][c]>maxColor:
@@ -120,27 +122,27 @@ class SavedVignette:
 			y0 += self.pixelHeight
 
 		# 	Adding the separating line
-		y0 += self.pixelHeight
-		y1 = y0 + self.pixelHeight
-		color = valueToRGB(0, color1, color2, minNorm=minColor, maxNorm=maxColor)
-		newDraw.rectangle([0, y0, width, y1], fill=color)
+		#y0 += self.pixelHeight
+		#y1 = y0 + self.pixelHeight
+		#color = valueToRGB(0, color1, color2, minNorm=minColor, maxNorm=maxColor)
+		#newDraw.rectangle([0, y0, width, y1], fill=color)
 
 		#	Adding the baseLines (bottom lines)
-		for l in range(len(self.baseLines)):
-			y0 += self.pixelHeight
-			y1 = y0 + self.pixelHeight
-			for c in range(len(self.lines[l])):
-				x0 = c * self.pixelWidth
-				x1 = x0 + self.pixelWidth
-				color = valueToRGB(self.baseLines[l][c], color1, color2,minNorm=minColor, maxNorm=maxColor)
-				newDraw.rectangle([x0, y0, x1, y1], fill=color)
+		#for l in range(len(self.baseLines)):
+		#	y0 += self.pixelHeight
+		#	y1 = y0 + self.pixelHeight
+		#	for c in range(len(self.lines[l])):
+		#		x0 = c * self.pixelWidth
+		#		x1 = x0 + self.pixelWidth
+		#		color = valueToRGB(self.baseLines[l][c], color1, color2,minNorm=minColor, maxNorm=maxColor)
+		#		newDraw.rectangle([x0, y0, x1, y1], fill=color)
 
 		# 	Adding the policies
 		if self.indicesPolicies is not None:
 			marginX, marginY = int(self.pixelWidth/4), int(self.pixelHeight/4)
 			for k in range(len(self.indicesPolicies)):
 				index, distance = self.indicesPolicies[k], round(self.policyDistance[k]/self.stepalpha)
-				x0, y0 = (distance + len(self.lines[0])//2) * self.pixelWidth, index * self.pixelHeight
+				x0, y0 = (distance + len(self.lines[0])//2) * self.pixelWidth, index * self.pixelHeight 
 				x1, y1 = x0 + self.pixelWidth, y0 + self.pixelHeight
 				color = invertColor(newIm.getpixel((x0,y0)))
 				newDraw.ellipse([x0+marginX, y0+marginY, x1-marginX, y1-marginY], fill=color)
@@ -154,16 +156,16 @@ class SavedVignette:
 		"""
 		self.fig, self.ax = plt.figure(title,figsize=figsize), plt.axes(projection='3d')
 		# Iterate over all lines
-		for step in range(-1, len(self.directions)):
+		for step in range(0, len(self.directions)):
 			# Check if current lines is a baseLine
-			if step == -1:
-				# baseLines are at the bottom of the image
-				height = -len(self.directions)-1
-				line = self.baseLines[0]
-			else:
-				# Vignette reads from top to bottom
-				height = -step
-				line = self.lines[step]
+			#if step == -1:
+			#	# baseLines are at the bottom of the image
+			#	height = -len(self.directions)-1
+			#	line = self.baseLines[0]
+			#else:
+			# Vignette reads from top to bottom
+			height = -step
+			line = self.lines[step]
 
 			x_line = np.linspace(-len(line)/2, len(line)/2, len(line))
 			y_line = np.ones(len(line))

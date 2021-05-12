@@ -8,6 +8,7 @@ import argparse
 import pickle
 import lzma
 import gym
+import ray
 
 from progress.bar import Bar
 
@@ -29,34 +30,82 @@ def create_data_folders() -> None:
     if not os.path.exists("Models"):
         os.mkdir("./Models")
 
+class Simulator(object):
+        def __init__(self, env_name):
+            self.env = gym.make(env_name)
+            self.env.reset()
+
+        def step(self, action):
+            return self.env.step(action)
+
 def evaluate_policy(params, env, weights):
-    policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
-    policy.set_weights(weights)
-    average_tot_score=0
-    for j in range(int(args.nb_evals)):
-        state = env.reset()
-        total_reward = 0
-        for t in range(params.max_episode_steps):
-            action = policy.select_action(state, params.deterministic_eval)
+    """
+         Perform an episode using the policy parameter and return the obtained reward
+         Used to evaluate an already trained policy, without storing data for further training
+         :return: the total reward collected during the episode
+         """
+    if params.multi_threading:
+        ray.init(include_dashboard=False)
+
+        @ray.remote
+        def eval(params, nb_evals, sim):
+            average_tot_score=0
+            for j in range(nb_evals):
+                state = sim.env.reset()
+                total_reward = 0
+                for t in range(params.max_episode_steps):
+                    action = policy.select_action(state, params.deterministic_eval)
+                    # print("action", action)
+                    next_state, reward, done, _ = sim.env.step(action)
+                    total_reward += reward
+                    state = next_state
+                    if done:
+                        # print(total_reward)
+                        average_tot_score+=total_reward
+                        break
+            return average_tot_score/nb_evals
+
+        policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
+        policy.set_weights(weights)
+        workers = min(16, os.cpu_count() + 4)
+        evals = int(params.nb_evals/workers)
+        sim_list = []
+        for i in range(workers):
+            sim_list.append(Simulator(params.env_name))
+        futures = [eval.remote(params, evals, sim) for sim in  sim_list]
+        returns = ray.get(futures)
+        # print(returns)
+        ray.shutdown()
+        average_tot_score = np.sum(returns)/workers
+        return average_tot_score
+    else:
+        policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
+        policy.set_weights(weights)
+        average_tot_score=0
+        for j in range(int(args.nb_evals)):
+            state = env.reset()
+            total_reward = 0
+            for t in range(params.max_episode_steps):
+                action = policy.select_action(state, params.deterministic_eval)
                 # print("action", action)
-            next_state, reward, done, _ = env.step(action)
-            total_reward += reward
-            state = next_state
+                next_state, reward, done, _ = env.step(action)
+                total_reward += reward
+                state = next_state
+                if done:
+                    average_tot_score+=total_reward/args.nb_evals
+                    break
+        return average_tot_score
 
-            if done:
-                average_tot_score+=total_reward/args.nb_evals
-                break
-    return average_tot_score
-
-def load_policies(folder):
+def load_policies(folder, params):
     """
      :param: folder : name of the folder containing policies
      Output : none (policies of the folder stored in self.env_dict)
      """
     listdir = os.listdir(folder)
     policies = []
+    listdir.sort(key=lambda x: x.split('#')[3])
     for policy_file in listdir:
-        pw = PolicyWrapper(GenericNet(), "", "", "", 0)
+        pw = PolicyWrapper(GenericNet(), "", "", "", 0, params.max_episode_steps)
         policy,_ = pw.load(directory+policy_file)
         policy = policy.get_weights()
         policies.append(policy)
@@ -72,7 +121,7 @@ if __name__ == '__main__':
     max_action = int(env.action_space.high[0])
     create_data_folders()
     directory = os.getcwd() + '/Models/'
-    policies=load_policies(directory)
+    policies=load_policies(directory, args)
 
     if len(np.shape(policies))>1:
         theta0 = policies[0]
@@ -105,7 +154,7 @@ if __name__ == '__main__':
 		# Processing the provided policies
 		# 	Distance of each policy along their directions, directions taken by the policies
         policyDistance, policyDirection = [], []
-        with SlowBar('Computing the directions to input policies', max=len(policies)) as bar:
+        with SlowBar('Computing the directions to input policies', max=len(policies)-1) as bar:
             for p in policies:
                 if not (p==policy).all():
                     distance = euclidienne(base_vect, p);	direction = (p - base_vect) / distance
@@ -124,7 +173,10 @@ if __name__ == '__main__':
         D = order_all_by_proximity(D)
 		#	Keeping track of which directions stem from a policy
         copyD = [list(direction) for direction in D]
-        indicesPolicies = [copyD.index(list(direction)) for direction in policyDirection]
+        #print(len(copyD))
+        #print(copyD.index(list(direction)))
+        indicesPolicies = [copyD.index(list(direction)) + 1 for direction in policyDirection]
+        #print(indicesPolicies)
         del copyD
 
 		# Evaluate the Model : mean, std
@@ -142,13 +194,20 @@ if __name__ == '__main__':
 		# 		Direction taken by the model (normalized)
         d = np.zeros(np.shape(base_vect)) if length_dist ==0 else base_vect / length_dist
 
+        # Print the number of workers with the multi-thread
+        if args.multi_threading:
+            workers = min(16, os.cpu_count() + 4)
+            evals = int(args.nb_evals/workers)
+            print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(evals) + " evaluations to do")
+
 		# Iterating over all directions, -1 is the direction that was initially taken by the model
         newVignette = SavedVignette(D, policyDistance=policyDistance, indicesPolicies=indicesPolicies,stepalpha=args.stepalpha, pixelWidth=args.pixelWidth, pixelHeight=args.pixelHeight,x_diff=args.x_diff, y_diff=args.y_diff)
-        for step in range(-1,len(D)):
-            print("\nDirection ", step, "/", len(D)-1)
+        for step in range(0,len(D)):
+            print("\nDirection ", step+1, "/", len(D))
 			# New parameters following the direction
 			#	Changing the range and step of the Vignette if the optional input policies are beyond that range
             if len(policyDistance)>0:
+                print("Changing the range to reach the input policies to " + str(max(max(policyDistance), args.maxalpha)) + " instead of " + str(args.maxalpha))
                 min_dist, max_dist = (args.minalpha, max(max(policyDistance), args.maxalpha))
             else:
                 min_dist = args.minalpha
@@ -159,7 +218,7 @@ if __name__ == '__main__':
             theta_plus, theta_minus = getPointsDirection(theta0, num_params, min_dist, max_dist, step_dist, d)
 
 			# Get the next direction
-            if step != -1:	d = D[step]
+            d = D[step]
 
 			# Evaluate using new parameters
             scores_plus, scores_minus = [], []
@@ -179,8 +238,7 @@ if __name__ == '__main__':
             scores_minus = scores_minus[::-1]
             line = scores_minus + [init_score] + scores_plus
 			# 	Adding the line to the image
-            if step == -1:	newVignette.baseLines.append(line)
-            else:	newVignette.lines.append(line)
+            newVignette.lines.append(line)
 
         computedImg = None
         try:
@@ -196,6 +254,6 @@ if __name__ == '__main__':
         angles3D = [20,45,50,65] # angles at which to save the plot3D
         elevs= [0, 30, 60]
         newVignette.saveAll(filename, saveInFile=args.saveInFile, save2D=args.save2D, save3D=args.save3D,directoryFile=args.directoryFile, directory2D=args.directory2D, directory3D=args.directory3D,computedImg=computedImg, angles3D=angles3D, elevs=elevs)
-
+        break
 
     env.close()

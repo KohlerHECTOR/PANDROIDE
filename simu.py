@@ -80,6 +80,14 @@ class Simu:
         episode.add(state, action, reward, done, next_state)
         return next_state, reward, done
 
+    class Simulator(object):
+        def __init__(self, env_name):
+            self.env = gym.make(env_name)
+            self.env.reset()
+
+        def step(self, action):
+            return self.env.step(action)
+
     def evaluate_episode(self, policy, deterministic, params, render=False):
         """
          Perform an episode using the policy parameter and return the obtained reward
@@ -89,24 +97,53 @@ class Simu:
          :param render: whether the episode is displayed or not (True or False)
          :return: the total reward collected during the episode
          """
-        average_reward=0
-        for i in range(params.nb_evals):
-            total_reward=0
-            done=False
-            state = self.reset(render)
-            while not done:
-                action = policy.select_action(state, deterministic)
-            # print("action", action)
-                next_state, reward, done, _ = self.env.step(action)
-                total_reward += reward
-                state = next_state
-            average_reward += total_reward
-        average_reward /= params.nb_evals
-        return average_reward
+        if params.multi_threading:
+            ray.init(include_dashboard=False, num_cpus=1)
 
+            @ray.remote
+            def eval(params, nb_evals, sim):
+                average_tot_score=0
+                for j in range(nb_evals):
+                    state = sim.env.reset()
+                    total_reward = 0
+                    for t in range(params.max_episode_steps):
+                        action = policy.select_action(state, deterministic)
+                        # print("action", action)
+                        next_state, reward, done, _ = sim.env.step(action)
+                        total_reward += reward
+                        state = next_state
+                        if done:
+                            # print(total_reward)
+                            average_tot_score+=total_reward
+                            break
+                return average_tot_score/nb_evals
 
-
-
+            workers = min(16, os.cpu_count() + 4)
+            evals = int(params.nb_evals/workers)
+            sim_list = []
+            for i in range(workers):
+                sim_list.append(Simu.Simulator(params.env_name))
+            futures = [eval.remote(params, evals, sim) for sim in  sim_list]
+            returns = ray.get(futures)
+            # print(returns)
+            ray.shutdown()
+            average_tot_score = np.sum(returns)/workers
+            return average_tot_score
+        else:
+            average_reward=0
+            for i in range(params.nb_evals):
+                total_reward=0
+                done=False
+                state = self.reset(render)
+                while not done:
+                    action = policy.select_action(state, deterministic)
+                    # print("action", action)
+                    next_state, reward, done, _ = self.env.step(action)
+                    total_reward += reward
+                    state = next_state
+                average_reward += total_reward
+            average_reward /= params.nb_evals
+            return average_reward
 
     def train_cem(self,pw, params,policy) -> None:
         """
@@ -121,6 +158,12 @@ class Simu:
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
+
+        # Print the number of workers with the multi-thread
+        if params.multi_threading:
+            workers = min(16, os.cpu_count() + 4)
+            evals = int(args.nb_evals/workers)
+            print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(evals) + " evaluations to do")
 
         print("Shape of weights vector is: ",policy.get_weights_dim())
 
@@ -248,6 +291,12 @@ class Simu:
             starting_weights = self.get_starting_weights(pw)
             policy.set_weights(starting_weights)
 
+        # Print the number of workers with the multi-thread
+        if params.multi_threading:
+            workers = min(16, os.cpu_count() + 4)
+            evals = int(args.nb_evals/workers)
+            print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(evals) + " evaluations to do")
+
         print("Shape of weights vector is: ", np.shape(self.best_weights))
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
         pw.save(cycle = 0,score = initial_score)
@@ -267,7 +316,7 @@ class Simu:
                 self.write_angles_global(cycle)
 
                 # policy evaluation part
-                if ((cycle%params.eval_freq)==0):
+                if (((cycle%params.eval_freq)==0)or(cycle>params.eval_freq)):
                     total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
                     # print(total_reward)
                     #wrote and store reward
@@ -282,7 +331,7 @@ class Simu:
                     self.best_weights = self.list_weights[-1]
                     self.best_weights_idx = cycle
             #Save the best policy obtained
-                if ((cycle%params.save_freq)==0):
+                if (((cycle%params.save_freq)==0)or(cycle>params.save_freq)):
                     pw.save(cycle = cycle+1,score = total_reward)
                 bar.next()
 
