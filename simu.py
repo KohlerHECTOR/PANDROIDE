@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import torch
 from progress.bar import Bar
 from slowBar import SlowBar
-
+import ray
+import gym
 def make_simu_from_params(params):
     """
     Creates the environment, adding the required wrappers
@@ -98,7 +99,7 @@ class Simu:
          :return: the total reward collected during the episode
          """
         if params.multi_threading:
-            ray.init(include_dashboard=False, num_cpus=1)
+            ray.init(include_dashboard=False)
 
             @ray.remote
             def eval(params, nb_evals, sim):
@@ -118,7 +119,7 @@ class Simu:
                             break
                 return average_tot_score/nb_evals
 
-            workers = min(16, os.cpu_count() + 4)
+            workers = os.cpu_count()
             evals = int(params.nb_evals/workers)
             sim_list = []
             for i in range(workers):
@@ -161,8 +162,8 @@ class Simu:
 
         # Print the number of workers with the multi-thread
         if params.multi_threading:
-            workers = min(16, os.cpu_count() + 4)
-            evals = int(args.nb_evals/workers)
+            workers = os.cpu_count()
+            evals = int(params.nb_evals/workers)
             print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(evals) + " evaluations to do")
 
         print("Shape of weights vector is: ",policy.get_weights_dim())
@@ -294,7 +295,7 @@ class Simu:
         # Print the number of workers with the multi-thread
         if params.multi_threading:
             workers = min(16, os.cpu_count() + 4)
-            evals = int(args.nb_evals/workers)
+            evals = int(params.nb_evals/workers)
             print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(evals) + " evaluations to do")
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
