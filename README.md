@@ -41,4 +41,4 @@ python3 main_vignettes.py --nb_lines 5 --nb_evals 100 --maxalpha 6 --stepalpha 1
 
 ## Multi-Threading (UNSTABLE)
 
-Ajouter l'argument **--multi-treading True** dans votre commande pour effectuer les evaluations en multi-threading
+Ajouter l'argument **--multi_treading True** dans votre commande pour effectuer les evaluations en multi-threading
