@@ -40,10 +40,10 @@ class Simulator(object):
 
 def evaluate_policy(params, env, weights):
     """
-         Perform an episode using the policy parameter and return the obtained reward
-         Used to evaluate an already trained policy, without storing data for further training
-         :return: the total reward collected during the episode
-         """
+    Perform an episode using the policy parameter and return the obtained reward
+    Used to evaluate an already trained policy, without storing data for further training
+    :return: the total reward collected during the episode
+    """
     if params.multi_threading:
         ray.init(include_dashboard=False)
 
