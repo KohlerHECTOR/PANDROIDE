@@ -40,36 +40,48 @@ class BernoulliPolicy(GenericNet):
         self.h2_size = l3
         self.a_size = l4
 
-    def set_weights(self, weights):
-        s_size = self.s_size
-        h1_size = self.h1_size
-        h2_size = self.h2_size
-        a_size = self.a_size
-        # separate the weights for each layer
-        fc1_end = (s_size*h1_size)+h1_size
-        fc1_W = torch.from_numpy(weights[:s_size*h1_size].reshape(s_size, h1_size))
-        fc1_b = torch.from_numpy(weights[s_size*h1_size:fc1_end])
-        fc2_end = fc1_end+(h1_size*h2_size)+h2_size
-        fc2_W = torch.from_numpy(weights[fc1_end:fc1_end+(h1_size*h2_size)].reshape(h1_size, h2_size))
-        fc2_b = torch.from_numpy(weights[fc1_end+(h1_size*h2_size):fc2_end])
-        fc3_W = torch.from_numpy(weights[fc2_end:fc2_end+(h2_size*a_size)].reshape(h2_size, a_size))
-        fc3_b = torch.from_numpy(weights[fc2_end+(h2_size*a_size):])
-        # set the weights for each layer
-        self.fc1.weight.data.copy_(fc1_W.view_as(self.fc1.weight.data))
-        self.fc1.bias.data.copy_(fc1_b.view_as(self.fc1.bias.data))
-        self.fc2.weight.data.copy_(fc2_W.view_as(self.fc2.weight.data))
-        self.fc2.bias.data.copy_(fc2_b.view_as(self.fc2.bias.data))
-        self.fc3.weight.data.copy_(fc3_W.view_as(self.fc3.weight.data))
-        self.fc3.bias.data.copy_(fc3_b.view_as(self.fc3.bias.data))
+        #To study the gradient
+        self.fc1Wgrad=None
+        self.fc1Bgrad=None
+        self.fc2Wfrad=None
+        self.fc2Bgrad=None
+        self.fc3Wgrad=None
+        self.fc3Bgrad=None
 
-    def set_last_layer_weights(self,weights):
-        return 1
+    def get_gradient(self):
+        grad=np.concatenate((self.fc1Wgrad,self.fc1Bgrad,self.fc2Wfrad,self.fc2Bgrad,self.fc3Wgrad,self.fc3Bgrad),axis=None)
+        return grad
+
+
+    def set_weights(self, weights, fix_layers=False):
+        if fix_layers:
+            pass
+        else:
+            s_size = self.s_size
+            h1_size = self.h1_size
+            h2_size = self.h2_size
+            a_size = self.a_size
+            # separate the weights for each layer
+            fc1_end = (s_size*h1_size)+h1_size
+            fc1_W = torch.from_numpy(weights[:s_size*h1_size].reshape(s_size, h1_size))
+            fc1_b = torch.from_numpy(weights[s_size*h1_size:fc1_end])
+            fc2_end = fc1_end+(h1_size*h2_size)+h2_size
+            fc2_W = torch.from_numpy(weights[fc1_end:fc1_end+(h1_size*h2_size)].reshape(h1_size, h2_size))
+            fc2_b = torch.from_numpy(weights[fc1_end+(h1_size*h2_size):fc2_end])
+            fc3_W = torch.from_numpy(weights[fc2_end:fc2_end+(h2_size*a_size)].reshape(h2_size, a_size))
+            fc3_b = torch.from_numpy(weights[fc2_end+(h2_size*a_size):])
+            # set the weights for each layer
+            self.fc1.weight.data.copy_(fc1_W.view_as(self.fc1.weight.data))
+            self.fc1.bias.data.copy_(fc1_b.view_as(self.fc1.bias.data))
+            self.fc2.weight.data.copy_(fc2_W.view_as(self.fc2.weight.data))
+            self.fc2.bias.data.copy_(fc2_b.view_as(self.fc2.bias.data))
+            self.fc3.weight.data.copy_(fc3_W.view_as(self.fc3.weight.data))
+            self.fc3.bias.data.copy_(fc3_b.view_as(self.fc3.bias.data))
+
 
     def get_weights_dim(self):
         return (self.s_size+1)*self.h1_size + (self.h1_size+1)*self.h2_size + (self.h2_size+1)*self.a_size
 
-    def get_last_layer_dim(self):
-        return (self.h2_size+1)*2
 
     def forward(self, state):
         """

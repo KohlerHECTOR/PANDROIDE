@@ -5,3 +5,4 @@ from policies.squashed_gaussian_policy import SquashedGaussianPolicy
 from policies.cnn_policy import CnnPolicy
 from policies.generic_net import GenericNet
 from policies.policy_wrapper import PolicyWrapper
+from policies.beta_policy import BetaPolicy

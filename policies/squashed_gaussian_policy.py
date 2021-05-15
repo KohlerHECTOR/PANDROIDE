@@ -126,8 +126,8 @@ class SquashedGaussianPolicy(GenericNet):
 
             # Finally applies tanh for squashing
             #If env is Pendulum:
-            # pi_action = 2*torch.tanh(pi_action)
-            pi_action = torch.tanh(pi_action)
+            pi_action = 2*torch.tanh(pi_action)
+            # pi_action = torch.tanh(pi_action)
             if len(pi_action) == 1:
                 pi_action = pi_action[0]
             return pi_action.data.numpy().astype(float)

@@ -34,12 +34,13 @@ def render_pol(params, env, weights):
     :param deterministic: whether the evaluation uses a deterministic policy
     :return: the obtained vector of 900 scores
     """
-    policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
+    policy = SquashedGaussianPolicy(env.observation_space.shape[0], 24, 36, 1, params.lr_actor)
     policy.set_weights(weights)
     state = env.reset()
     env.render(mode='rgb_array')
     for i in range(1000):
         action = policy.select_action(state, deterministic = True)
+        print(action)
         next_state, reward, done, _ = env.step(action)
         env.render(mode='rgb_array')
         state = next_state
@@ -52,8 +53,10 @@ if __name__ == '__main__':
     pw = PolicyWrapper(GenericNet(),0, "", "", "", 0)
 
     env = make_env(args.env_name, args.policy_type, args.max_episode_steps)
+    env = gym.wrappers.Monitor(env, './videos/PG_fin')
 
     directory = os.getcwd() + '/Models/'
     weights_vecs=load_policies(directory)
     for weights_vec in weights_vecs:
         render_pol(args, env, weights_vec)
+    env.close()

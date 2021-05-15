@@ -30,7 +30,7 @@ def get_args():
     """
     parser = argparse.ArgumentParser()
     # multi-threading setting ##UNSTABLE
-    parser.add_argument('--multi_threading', type=str, default=False, help='multi-threading for high number of evaluations')
+    parser.add_argument('--multi_threading', type=bool, default=False, help='multi-threading for high number of evaluations')
     # environment setting
     parser.add_argument('--env_name', type=str, default='Pendulum-v0', help='the environment name')
     parser.add_argument('--env_obs_space_name', type=str, default=["pos", "angle"])  # ["pos", "angle", "vx", "v angle"]
@@ -38,7 +38,7 @@ def get_args():
     # study settings
     parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem, evo_pg')
     parser.add_argument('--critic_update_method', type=str, default="dataset", help='critic update method: batch or dataset')
-    parser.add_argument('--policy_type', type=str, default="normal", help='policy type: bernoulli, normal, squashedGaussian, discrete')
+    parser.add_argument('--policy_type', type=str, default="normal", help='policy type: bernoulli, normal, squashedGaussian, discrete, beta')
     parser.add_argument('--team_name', type=str, default='default_team', help='team name')
     parser.add_argument('--deterministic_eval', type=bool, default=True, help='deterministic policy evaluation?') # Only False when not used
     # study parameters

@@ -2,7 +2,7 @@ import os
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper,BetaPolicy
 from critics import VNetwork, QNetworkContinuous
 from arguments import get_args
 from visu.visu_critics import plot_critic
@@ -47,7 +47,7 @@ def study_cem(params,starting_pol =None) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['squashedGaussian', 'normal'], 'unsupported policy type'
+    assert params.policy_type in ['squashedGaussian', 'normal','beta'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = params.gradients
@@ -60,9 +60,11 @@ def study_cem(params,starting_pol =None) -> None:
         for j in range(params.nb_repet):
             simu.env.reinit()
             if params.policy_type == "squashedGaussian":
-                policy =SquashedGaussianPolicy(simu.obs_size, 24, 36, 1)
-            if params.policy_type=="normal":
-                policy = NormalPolicy(simu.obs_size, 24, 36, 1)
+                policy =SquashedGaussianPolicy(simu.obs_size, 32, 64, 1)
+            elif params.policy_type=="normal":
+                policy = NormalPolicy(simu.obs_size, 32, 64, 1)
+            elif params.policy_type=="beta":
+                policy = BetaPolicy(simu.obs_size, 32, 64, 1)
             if starting_pol !=None :
                 policy.set_weights(starting_pol[j])
             pw = PolicyWrapper(policy, j, params.policy_type, simu.env_name, params.team_name, params.max_episode_steps)
@@ -103,7 +105,7 @@ def study_pg(params,starting_pol =None) -> None:
     :param params: the parameters of the study
     :return: nothing
     """
-    assert params.policy_type in ['bernoulli', 'normal', 'squashedGaussian', 'discrete'], 'unsupported policy type'
+    assert params.policy_type in ['bernoulli', 'normal', 'squashedGaussian', 'discrete','beta'], 'unsupported policy type'
     chrono = Chrono()
     # cuda = torch.device('cuda')
     study = params.gradients
@@ -126,9 +128,11 @@ def study_pg(params,starting_pol =None) -> None:
                     nb_actions = simu.env.action_space.n
                 policy = DiscretePolicy(simu.obs_size, 24, 36, nb_actions, params.lr_actor)
             elif params.policy_type == "normal":
-                policy = NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+                policy = NormalPolicy(simu.obs_size, 32, 64, 1, params.lr_actor)
             elif params.policy_type == "squashedGaussian":
-                policy = SquashedGaussianPolicy(simu.obs_size, 24, 36, 1, params.lr_actor)
+                policy = SquashedGaussianPolicy(simu.obs_size, 32, 64, 1, params.lr_actor)
+            elif params.policy_type == "beta":
+                policy = BetaPolicy(simu.obs_size, 32, 64, 1, params.lr_actor)
             # policy = policy.cuda()
             if starting_pol !=None :
                 policy.set_weights(starting_pol[j])
@@ -158,9 +162,11 @@ def get_same_starting_policies(params):
     policies = []
     for i in range(params.nb_repet):
         if params.policy_type == 'normal':
-            policies.append(NormalPolicy(simu.obs_size, 24, 36, 1, params.lr_actor).get_weights())
-        else:
-            policies.append(SquashedGaussianPolicy(simu.obs_size, 24, 36, 1, params.lr_actor).get_weights())
+            policies.append(NormalPolicy(simu.obs_size, 32, 64, 1, params.lr_actor).get_weights())
+        elif params.policy_type == 'squashedGaussian':
+            policies.append(SquashedGaussianPolicy(simu.obs_size, 32, 64, 1, params.lr_actor).get_weights())
+        elif params.policy_type == 'beta':
+            policies.append(BetaPolicy(simu.obs_size, 32, 64, 1, params.lr_actor).get_weights())
     return policies
 
 if __name__ == '__main__':

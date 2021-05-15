@@ -317,9 +317,9 @@ class Simu:
                 self.write_angles_global(cycle)
 
                 # policy evaluation part
-                if (((cycle%params.eval_freq)==0)or(cycle>params.eval_freq)):
+                if ((cycle%params.eval_freq)==0):
                     total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                    # print(total_reward)
+                    print(total_reward)
                     #wrote and store reward
                     self.env.write_reward(cycle+1,total_reward)
                     self.list_rewards[cycle] = total_reward
@@ -332,7 +332,7 @@ class Simu:
                     self.best_weights = self.list_weights[-1]
                     self.best_weights_idx = cycle
             #Save the best policy obtained
-                if (((cycle%params.save_freq)==0)or(cycle>params.save_freq)):
+                if ((cycle%params.save_freq)==0):
                     pw.save(cycle = cycle+1,score = total_reward)
                 bar.next()
 
