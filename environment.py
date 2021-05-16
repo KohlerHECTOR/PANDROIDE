@@ -9,7 +9,24 @@ from gym.wrappers import TimeLimit
 # from gym import envs
 # print(envs.registry.all())
 
-def make_env(env_name, policy_type, max_episode_steps, env_obs_space_name=None):
+
+class Simulator(object):
+    """
+    Object used by the multi-threading to give each worker an environnement
+    """
+    def __init__(self, args):
+        self.env = make_env(args.env_name, args.policy_type,
+                            args.max_episode_steps, args.env_obs_space_name)
+        self.env.reset()
+
+    def step(self, action):
+        return self.env.step(action)
+
+
+def make_env(env_name,
+             policy_type,
+             max_episode_steps,
+             env_obs_space_name=None):
     """
     Wrap the environment into a set of wrappers depending on some hyper-parameters
     Used so that most environments can be used with the same policies and algorithms
@@ -51,5 +68,5 @@ def make_env(env_name, policy_type, max_episode_steps, env_obs_space_name=None):
         env = MountainCarContinuousWrapper(env)
 
     env = PerfWriter(env)
-    print(env)
+    #print(env)
     return env
