@@ -10,5 +10,5 @@ class PendulumWrapper(gym.Wrapper):
         self.min_reward_ = -(pi ** 2 + 0.1 * 8 ** 2 + 0.001 * 2 ** 2)
 
     def step(self, action):
-        next_state, reward, done, y = self.env.step(2*(2*action-1))
+        next_state, reward, done, y = self.env.step(action)
         return next_state, reward, done, y

@@ -230,9 +230,9 @@ class SavedVignette:
                               xnum)
         [index_zero] = np.where(xlabels == 0)[0]
         halflabels = np.around(xlabels[:(index_zero)], 2)
-        xlabels = list(halflabels) + [0] + list(np.abs(halflabels[::-1]))
+        xlabels = list(np.abs(halflabels)) + [0] + list(np.abs(halflabels[::-1]))
         plt.xticks(np.linspace(5, width - 5, xnum), xlabels)
-        plt.yticks(np.linspace(5, height-5, height//10), (np.linspace(1, (height//10), height//10, dtype=int))[::-1], fontsize=3)
+        plt.yticks(np.linspace(5, height - 5, height//10), (np.linspace(1, (height//10), height//10, dtype=int))[::-1], fontsize=3)
         plt.tight_layout()
         if (height // 10) > 10:
             plt.legend(loc='upper center',
@@ -335,12 +335,12 @@ class SavedVignette:
             posits = [np.ceil(self.x_diff * step) for step in np.linspace(-len(self.lines[0])//2+1, 0, len(self.lines[0])//(len(self.lines[0])//3))] \
                 + [np.floor(self.x_diff * step) for step in np.linspace(0, len(self.lines[0])//2+1, len(self.lines[0])//(len(self.lines[0])//3))]
             values = list(np.ceil(np.linspace(int(max(max(self.policyDistance), len(self.lines[0])//2)), 0, len(self.lines[0])//(len(self.lines[0])//3)))) \
-                + list(np.floor(np.linspace(0, -int(max(max(self.policyDistance), len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//3))))
+                + list(np.ceil(np.linspace(0, int(max(max(self.policyDistance), len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//3))))
             self.ax.set_xticks(posits)
             self.ax.set_xticklabels(np.around(values, 2))
 
             #	Sampled directions
-            self.ax.set_ylabel("Directions")
+            self.ax.set_ylabel("Lines")
         if surfaces is True:
             posits = [self.y_diff * (round(width / 2) - step * width)
                 for step in np.linspace(0, len(self.directions)-1, len(self.directions))]
