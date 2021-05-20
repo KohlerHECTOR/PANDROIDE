@@ -30,13 +30,23 @@ python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --popul
 
 ## Visualisation du Paysage
 
-Permet de visualiser le paysage autour d'une politique ou plusieurs politiques misent dans le dossier **/Models**
+Permet de creer le paysage autour d'une politique ou plusieurs politiques misent dans le dossier **/Models**
+Les vignettes peuvent être retrouvées dans le dossier **/Vignette_output**
+La vignette sauvegardé au nom de **--filename** peut être retrouvé dans **/SavedVignette**
+
+Exemple de commande :
+
+```
+python3 main_vignettes.py --nb_lines 15 --nb_evals 5 --maxalpha 50 --stepalpha 1 --title "Landscape" --filename vignette
+```
+
+Permet de visualiser le paysage d'une vignette déjà faite, en partant d'un fichier de **/SavedVignette**
 Les vignettes peuvent être retrouvées dans le dossier **/Vignette_output**
 
 Exemple de commande :
 
 ```
-python3 main_vignettes.py --nb_lines 5 --nb_evals 100 --maxalpha 6 --stepalpha 1
+python3 savedVignette.py --title "Landscape Test" --filename vignette_test
 ```
 
 ## Multi-Threading (UNSTABLE)

@@ -1,5 +1,7 @@
 # coding: utf-8
+import os
 
+from environment import make_env
 import pickle
 import lzma
 
@@ -11,7 +13,9 @@ from PIL import Image, ImageDraw
 
 import colorTest
 from vector_util import valueToRGB, checkFormat
+from arguments import get_args
 import transformFunction
+import argparse
 
 saveFormat = '.xz'
 
@@ -42,7 +46,19 @@ class SavedVignette:
                  pixelHeight=10,
                  x_diff=2.,
                  y_diff=2.,
-                 colors=None):
+                 colors=None,
+                 env="CartPoleContinuous-v0",
+                 policy="normal",
+                 title="Landscape",
+                 maxColor=None,
+                 minColor=None):
+
+        # Informations to show
+        self.env = env
+        self.policy = policy
+        self.title = title
+        self.maxColor = maxColor
+        self.minColor = minColor
 
         # Content of the Vignette
         self.lines = []  # Upper lines
@@ -85,7 +101,7 @@ class SavedVignette:
         img = self.plot2D(filename=image) if img is None else img
         plt.savefig(filename + '.png')
         plt.savefig(filename + '.pdf')
-        plt.show()
+        #plt.show()
 
     @checkFormat('.pdf')
     def save3D(self, filename, elevs=[30], angles=[0]):
@@ -99,7 +115,7 @@ class SavedVignette:
                 plt.draw()
                 plt.savefig(filename + '_e{}_a{}.pdf'.format(elev, angle),
                             format='pdf')
-        plt.show()
+        #plt.show()
 
     def saveAll(self,
                 filename,
@@ -115,6 +131,14 @@ class SavedVignette:
         """
 		Centralises the saving process
 		"""
+        #   Choosing max/min colors
+        if self.env == "CartPoleContinuous-v0":
+            self.maxColor = 200
+            self.minColor = 0
+        if self.env == "Pendulum-v0":
+            self.maxColor = -100
+            self.minColor = -1900
+
         if saveInFile is True: self.saveInFile(directoryFile + '/' + filename)
         if save2D is True:
             self.save2D(directory2D + '/' + filename + '_2D_image',
@@ -140,16 +164,6 @@ class SavedVignette:
         newIm = Image.new("RGB", (width, height))
         newDraw = ImageDraw.Draw(newIm)
 
-        #   Choosing max/min colors
-        maxColor = -100
-        minColor = -1900
-        for l in range(len(self.lines)):
-            for c in range(len(self.lines[l])):
-                if self.lines[l][c] > maxColor:
-                    maxColor = self.lines[l][c]
-                if self.lines[l][c] < minColor:
-                    minColor = self.lines[l][c]
-
         #	Adding the results
         y0 = 0
         for l in range(len(self.lines)):
@@ -161,8 +175,8 @@ class SavedVignette:
                 color = valueToRGB(self.lines[l][c],
                                    color1,
                                    color2,
-                                   minNorm=minColor,
-                                   maxNorm=maxColor)
+                                   minNorm=self.minColor,
+                                   maxNorm=self.maxColor)
                 newDraw.rectangle([x0, y0, x1, y1], fill=color)
             y0 += self.pixelHeight
 
@@ -188,24 +202,24 @@ class SavedVignette:
 		"""
         image = Image.open(filename + '.png')
         width, height = image.size
-        plt.title(label="Landscape")
-        plt.ylabel("Arbitrary directions")
+        plt.title(str(self.env) + " - " + str(self.policy) + "\n" + str(self.title))
+        plt.ylabel("Directions")
         plt.xlabel("Distances to central policy")
         plt.imshow(image, cmap='viridis')
         plt.colorbar(label="Reward", orientation="horizontal", aspect=50)
-        plt.clim(-1900, -100)
+        plt.clim(self.minColor, self.maxColor)
         if (height // 10) > 10:
-            if any(color == "#2ca02c" for color in self.colors):
-                plt.plot(0, 0, "-", c="tab:green", label="PG policies")
+            if any(color == "#ff7f0e" for color in self.colors):
+                plt.plot(0, 0, "-", c="tab:orange", label="PG policies")
             if any(color == "#d62728" for color in self.colors):
                 plt.plot(0, 0, "-", c="tab:red", label="CEM policies")
 
         if (width // 10) < 20:
-            xrate = 2
-        elif (width // 10) < 40:
             xrate = 4
-        else:
+        elif (width // 10) < 40:
             xrate = 8
+        else:
+            xrate = 16
 
         if (width // (xrate * 10)) % 2 == 0:
             xnum = (width // (xrate * 10)) + 1
@@ -213,15 +227,12 @@ class SavedVignette:
             xnum = (width // (xrate * 10))
         xlabels = np.linspace(-self.stepalpha * (width // 20),
                               self.stepalpha * (width // 20),
-                              xnum,
-                              dtype=int)
-        xlabels = np.concatenate(((xlabels[:np.shape(xlabels)[0] // 2] + 1),
-                                  xlabels[np.shape(xlabels)[0] // 2:]),
-                                 axis=None)
-        plt.xticks(np.linspace(5, width - 5, xnum), map(str, xlabels))
-        plt.yticks(
-            np.linspace(5, height - 5, ((height - 10) // (10)) + 1, dtype=int),
-            map(str, np.arange(1, ((height - 10) // (10)) + 2, dtype=int)))
+                              xnum)
+        [index_zero] = np.where(xlabels == 0)[0]
+        halflabels = np.around(xlabels[:(index_zero)], 2)
+        xlabels = list(halflabels) + [0] + list(np.abs(halflabels[::-1]))
+        plt.xticks(np.linspace(5, width - 5, xnum), xlabels)
+        plt.yticks(np.linspace(5, height-5, height//10), (np.linspace(1, (height//10), height//10, dtype=int))[::-1], fontsize=3)
         plt.tight_layout()
         if (height // 10) > 10:
             plt.legend(loc='upper center',
@@ -240,7 +251,7 @@ class SavedVignette:
 		"""
         self.fig, self.ax = plt.figure(
             title, figsize=figsize), plt.axes(projection='3d')
-        plt.title("Landscape")
+        plt.title(str(self.env) + " - " + str(self.policy) + "\n" + str(self.title))
         # Computing the intial 3D Vignette
         if surfaces is True:
             args = [transformFunction.transformIdentity]
@@ -267,12 +278,13 @@ class SavedVignette:
                         width=0,
                         linewidth=0,
                         cmap="viridis"):
-        if any(color == "#2ca02c" for color in self.colors):
-            plt.plot(0, 0, "-", c="tab:green", label="PG policies")
+        if any(color == "#ff7f0e" for color in self.colors):
+            plt.plot(0, 0, "-", c="tab:orange", label="PG policies")
         if any(color == "#d62728" for color in self.colors):
             plt.plot(0, 0, "-", c="tab:red", label="CEM policies")
         sm = plt.cm.ScalarMappable(cmap="viridis",
-                                   norm=plt.Normalize(vmin=-1900, vmax=-100))
+                                   norm=plt.Normalize(vmin=self.minColor,
+                                                      vmax=self.maxColor))
         sm._A = []
         plt.colorbar(sm, label="Reward", aspect=50)
         # Iterate over all lines
@@ -302,14 +314,14 @@ class SavedVignette:
 
                 Z = np.array([transformedLine, transformedLine])
 
-                surface = self.ax.plot_surface(self.x_diff * X,
-                                               self.y_diff * Y,
-                                               Z,
-                                               cmap=cmap,
-                                               linewidth=linewidth,
-                                               alpha=transparency,
-                                               norm=plt.Normalize(vmin=-1900,
-                                                                  vmax=-100))
+                self.ax.plot_surface(self.x_diff * X,
+                                     self.y_diff * Y,
+                                     Z,
+                                     cmap=cmap,
+                                     linewidth=linewidth,
+                                     alpha=transparency,
+                                     norm=plt.Normalize(vmin=self.minColor,
+                                                        vmax=self.maxColor))
             else:
                 x_line = np.linspace(-len(line) / 2, len(line) / 2, len(line))
                 y_line = np.ones(len(line))
@@ -320,27 +332,25 @@ class SavedVignette:
             # Plotting user information
             #	Sampled policies
             self.ax.set_xlabel("Distances to central policy")
-            posits = [self.x_diff * step for step in np.linspace(-len(self.lines[0])//2+1, 0, len(self.lines[0])//(len(self.lines[0])//5), dtype=int)] \
-                + [self.x_diff * step for step in np.linspace(0, len(self.lines[0])//2+1, len(self.lines[0])//(len(self.lines[0])//5), dtype=int)]
-            values = list(np.linspace(-int(max(max(self.policyDistance), len(self.lines[0])//2)), 0, len(self.lines[0])//(len(self.lines[0])//5), dtype=int)) \
-                + list(np.linspace(0, int(max(max(self.policyDistance), len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//5), dtype=int))
+            posits = [np.ceil(self.x_diff * step) for step in np.linspace(-len(self.lines[0])//2+1, 0, len(self.lines[0])//(len(self.lines[0])//3))] \
+                + [np.floor(self.x_diff * step) for step in np.linspace(0, len(self.lines[0])//2+1, len(self.lines[0])//(len(self.lines[0])//3))]
+            values = list(np.ceil(np.linspace(int(max(max(self.policyDistance), len(self.lines[0])//2)), 0, len(self.lines[0])//(len(self.lines[0])//3)))) \
+                + list(np.floor(np.linspace(0, -int(max(max(self.policyDistance), len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//3))))
             self.ax.set_xticks(posits)
-            self.ax.set_xticklabels(values)
+            self.ax.set_xticklabels(np.around(values, 2))
 
             #	Sampled directions
-            self.ax.set_ylabel("Arbitrary Directions")
+            self.ax.set_ylabel("Directions")
         if surfaces is True:
-            posits = [
-                self.y_diff * (round(width / 2) - step * width)
-                for step in range(len(self.directions))
-            ]
+            posits = [self.y_diff * (round(width / 2) - step * width)
+                for step in np.linspace(0, len(self.directions)-1, len(self.directions))]
         else:
-            posits = [
-                self.y_diff * (-step) for step in range(len(self.directions))
-            ]
-        values = list(range(1, len(self.lines) + 1))
+            posits = [self.y_diff * (-step)
+                for step in np.linspace(0, len(self.directions)-1, len(self.directions))]
+
+        values = list(np.linspace(1, len(self.directions), len(self.directions), dtype=int))
         self.ax.set_yticks(posits)
-        self.ax.set_yticklabels(values)
+        self.ax.set_yticklabels(values, fontsize=6)
 
         # 	Reward
         self.ax.set_zlabel("Reward")
@@ -364,6 +374,19 @@ class SavedVignette:
 
 if __name__ == "__main__":
 
-    directoryFile = "SavedVignette"
-    directory2D = "Vignette_output"
-    SavedVignette.plot2D(directory2D, "new_grad_1")
+    args = get_args()
+    print(args)
+    directory = os.getcwd() + '/Models/'
+    LoadedVignette = loadFromFile(args.filename, folder=args.directoryFile)
+    angles3D = [20, 45, 50, 65]  # angles at which to save the plot3D
+    elevs = [0, 30, 60]
+    LoadedVignette.saveAll(args.filename,
+                           saveInFile=False,
+                           save2D=True,
+                           save3D=True,
+                           directoryFile="SavedVignette",
+                           directory2D="Vignette_output",
+                           directory3D="Vignette_output",
+                           computedImg=None,
+                           angles3D=angles3D,
+                           elevs=elevs)
