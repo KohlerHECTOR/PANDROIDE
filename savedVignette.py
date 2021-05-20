@@ -331,11 +331,15 @@ class SavedVignette:
 
             # Plotting user information
             #	Sampled policies
+            if self.policyDistance == []:
+                maxdist = 0
+            else:
+                maxdist = max(self.policyDistance)
             self.ax.set_xlabel("Distances to central policy")
             posits = [np.ceil(self.x_diff * step) for step in np.linspace(-len(self.lines[0])//2+1, 0, len(self.lines[0])//(len(self.lines[0])//3))] \
                 + [np.floor(self.x_diff * step) for step in np.linspace(0, len(self.lines[0])//2+1, len(self.lines[0])//(len(self.lines[0])//3))]
-            values = list(np.ceil(np.linspace(int(max(max(self.policyDistance), len(self.lines[0])//2)), 0, len(self.lines[0])//(len(self.lines[0])//3)))) \
-                + list(np.ceil(np.linspace(0, int(max(max(self.policyDistance), len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//3))))
+            values = list(np.ceil(np.linspace(int(max(maxdist, len(self.lines[0])//2)), 0, len(self.lines[0])//(len(self.lines[0])//3)))) \
+                + list(np.ceil(np.linspace(0, int(max(maxdist, len(self.lines[0])//2)), len(self.lines[0])//(len(self.lines[0])//3))))
             self.ax.set_xticks(posits)
             self.ax.set_xticklabels(np.around(values, 2))
 

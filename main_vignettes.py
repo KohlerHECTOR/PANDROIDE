@@ -19,7 +19,7 @@ from vector_util import *
 # import torch
 from chrono import Chrono
 from simu import make_simu_from_params
-from policies import GenericNet, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
+from policies import GenericNet, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, BetaPolicy, PolicyWrapper
 from arguments import get_args
 from numpy.random import random
 from environment import Simulator, make_env
@@ -59,7 +59,6 @@ def evaluate_policy(params, env, weights):
                         if params.env_name == "Pendulum-v0":
                             next_state, reward, done, _ = sim.env.step(2 * (2 * action - 1))
                         elif params.env_name == "CartPoleContinuous-v0":
-                            print("test")
                             next_state, reward, done, _ = sim.env.step(2 * action - 1)
                     total_reward += reward
                     state = next_state
@@ -73,7 +72,6 @@ def evaluate_policy(params, env, weights):
         if params.policy_type == "normal":
             policy = NormalPolicy(env.observation_space.shape[0], 32, 64, 1,params.lr_actor)
         if params.policy_type == "beta":
-            print("test")
             policy = BetaPolicy(env.observation_space.shape[0], 32, 64, 1,params.lr_actor)
         policy.set_weights(weights)
         workers = min(16, os.cpu_count() + 4)
@@ -87,8 +85,10 @@ def evaluate_policy(params, env, weights):
         average_tot_score = np.sum(returns) / workers
         return average_tot_score
     else:
-        policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1,
-                              params.lr_actor)
+        if params.policy_type == "normal":
+            policy = NormalPolicy(env.observation_space.shape[0], 32, 64, 1,params.lr_actor)
+        if params.policy_type == "beta":
+            policy = BetaPolicy(env.observation_space.shape[0], 32, 64, 1,params.lr_actor)
         policy.set_weights(weights)
         average_tot_score = 0
         for j in range(int(args.nb_evals)):
@@ -96,7 +96,13 @@ def evaluate_policy(params, env, weights):
             total_reward = 0
             for t in range(params.max_episode_steps):
                 action = policy.select_action(state, params.deterministic_eval)
-                next_state, reward, done, _ = env.step(action)
+                if params.policy_type == "normal":
+                    next_state, reward, done, _ = env.step(action)
+                elif params.policy_type == "beta":
+                    if params.env_name == "Pendulum-v0":
+                        next_state, reward, done, _ = env.step(2 * (2 * action - 1))
+                    elif params.env_name == "CartPoleContinuous-v0":
+                        next_state, reward, done, _ = env.step(2 * action - 1)
                 total_reward += reward
                 state = next_state
                 if done:
