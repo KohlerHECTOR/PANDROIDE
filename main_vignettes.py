@@ -162,7 +162,7 @@ def compute_vignette(args, env, policies, colors):
     # 	Distance of each policy along their directions, directions taken by the policies
     policyDistance, policyDirection = [], []
     with SlowBar('Computing the directions to input policies',
-                 max=len(policies) - 1) as bar:
+                 max=max(len(policies) - 1, 1)) as bar:
         for p in policies:
             if not (p == policy).all():
                 distance = euclidienne(base_vect, p)
