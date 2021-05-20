@@ -8,6 +8,7 @@ import pickle
 import lzma
 import gym
 import ray
+import sys
 
 from progress.bar import Bar
 
@@ -20,6 +21,7 @@ from simu import make_simu_from_params
 from policies import GenericNet, BernoulliPolicy, NormalPolicy, SquashedGaussianPolicy, DiscretePolicy, PolicyWrapper
 from arguments import get_args
 from numpy.random import random
+from environment import Simulator, make_env
 
 
 def create_data_folders() -> None:
@@ -29,15 +31,6 @@ def create_data_folders() -> None:
     """
     if not os.path.exists("Models"):
         os.mkdir("./Models")
-
-
-class Simulator(object):
-    def __init__(self, env_name):
-        self.env = gym.make(env_name)
-        self.env.reset()
-
-    def step(self, action):
-        return self.env.step(action)
 
 
 def evaluate_policy(params, env, weights):
@@ -66,6 +59,7 @@ def evaluate_policy(params, env, weights):
                         # print(total_reward)
                         average_tot_score += total_reward
                         break
+            env.close()
             return average_tot_score / nb_evals
 
         policy = NormalPolicy(env.observation_space.shape[0], 24, 36, 1,
@@ -75,10 +69,9 @@ def evaluate_policy(params, env, weights):
         evals = int(params.nb_evals / workers)
         sim_list = []
         for i in range(workers):
-            sim_list.append(Simulator(params.env_name))
+            sim_list.append(Simulator(params))
         futures = [eval.remote(params, evals, sim) for sim in sim_list]
         returns = ray.get(futures)
-        # print(returns)
         ray.shutdown()
         average_tot_score = np.sum(returns) / workers
         return average_tot_score
@@ -92,7 +85,6 @@ def evaluate_policy(params, env, weights):
             total_reward = 0
             for t in range(params.max_episode_steps):
                 action = policy.select_action(state, params.deterministic_eval)
-                # print("action", action)
                 next_state, reward, done, _ = env.step(action)
                 total_reward += reward
                 state = next_state
@@ -102,38 +94,31 @@ def evaluate_policy(params, env, weights):
         return average_tot_score
 
 
-def load_policies(folder, params):
+def load_policies(folder):
     """
-     :param: folder : name of the folder containing policies
-     Output : none (policies of the folder stored in self.env_dict)
-     """
+    Sort the policies and add colors to each method
+    :param: folder : name of the folder containing policies
+    Output : array of policies sorted and array of colors
+    """
     listdir = os.listdir(folder)
     policies = []
     listdir.sort(key=lambda x: x.split('#')[3])
     colors = []
+    print("\nPolices loaded :")
     for policy_file in listdir:
-        if policy_file.split('#')[1] == 'CEM':
-            colors.append("#9467bd")
         if policy_file.split('#')[1] == 'PG':
+            colors.append("#2ca02c")
+        if policy_file.split('#')[1] == 'CEM':
             colors.append("#d62728")
         pw = PolicyWrapper(GenericNet(), 0, "", "", "", 0)
         policy, _ = pw.load(directory + policy_file)
         policy = policy.get_weights()
         policies.append(policy)
-    return policies, colors
+    print("\n")
+    return policies, colors[1:]
 
 
-if __name__ == '__main__':
-    args = get_args()
-    print(args)
-    env = gym.make(args.env_name)
-    state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
-    max_action = int(env.action_space.high[0])
-    create_data_folders()
-    directory = os.getcwd() + '/Models/'
-    policies, colors = load_policies(directory, args)
-
+def compute_vignette(args, env, policies, colors):
     if len(np.shape(policies)) > 1:
         theta0 = policies[0]
     else:
@@ -141,8 +126,11 @@ if __name__ == '__main__':
         policies = [policies]
     num_params = len(theta0)
     base_vect = theta0
-    D = getDirectionsMuller(args.nb_lines, num_params)
-
+    try:
+        D = getDirectionsMuller(args.nb_lines, num_params)
+    except Exception as e:
+        print("/Models empty (Policies needed to compute a vignette)")
+        sys.exit()
     # Compute fitness over these directions :
     previous_theta = None  # Remembers theta
     count = 1
@@ -179,18 +167,15 @@ if __name__ == '__main__':
                         [euclidienne(direction, dirK) for dirK in D])]
                     bar.next()
 
-# 	Adding the provided policies
+        # 	Adding the provided policies
         D += policyDirection
         # 	Ordering the directions
         D = order_all_by_proximity(D)
         #	Keeping track of which directions stem from a policy
         copyD = [list(direction) for direction in D]
-        #print(len(copyD))
-        #print(copyD.index(list(direction)))
         indicesPolicies = [
             copyD.index(list(direction)) for direction in policyDirection
         ]
-        print("indicesPolicies : " + str(indicesPolicies))
         del copyD
 
         # Evaluate the Model : mean, std
@@ -200,14 +185,6 @@ if __name__ == '__main__':
 
         # Study the geometry around the model
         print("Starting study around the model...")
-        theta_plus_scores, theta_minus_scores = [], []
-        image, base_image = [], []
-
-        #	Norm of the model
-        length_dist = euclidienne(base_vect, np.zeros(np.shape(base_vect)))
-        # 		Direction taken by the model (normalized)
-        d = np.zeros(np.shape(
-            base_vect)) if length_dist == 0 else base_vect / length_dist
 
         # Print the number of workers with the multi-thread
         if args.multi_threading:
@@ -216,7 +193,7 @@ if __name__ == '__main__':
             print("\n Multi-Threading Evaluations : " + str(workers) +
                   " workers with each " + str(evals) + " evaluations to do")
 
-# Iterating over all directions, -1 is the direction that was initially taken by the model
+        # Iterating over all directions, -1 is the direction that was initially taken by the model
         newVignette = SavedVignette(D,
                                     policyDistance=policyDistance,
                                     indicesPolicies=indicesPolicies,
@@ -227,6 +204,8 @@ if __name__ == '__main__':
                                     y_diff=args.y_diff,
                                     colors=colors)
         for step in range(0, len(D)):
+            # Get the direction
+            d = D[step]
             print("\nDirection ", step + 1, "/", len(D))
             # New parameters following the direction
             #	Changing the range and step of the Vignette if the optional input policies are beyond that range
@@ -245,9 +224,6 @@ if __name__ == '__main__':
             # 	Sampling new models' parameters following the direction
             theta_plus, theta_minus = getPointsDirection(
                 theta0, num_params, min_dist, max_dist, step_dist, d)
-
-            # Get the next direction
-            d = D[step]
 
             # Evaluate using new parameters
             scores_plus, scores_minus = [], []
@@ -273,19 +249,7 @@ if __name__ == '__main__':
             newVignette.lines.append(line)
 
         computedImg = None
-        computedImgCleaned = None
-        try:
-            # Computing the 2D Vignette
-            if args.save2D is True:
-                computedImg = newVignette.plot2D()
-# Computing the 3D Vignette
-#if args.save3D is True: newVignette.plot3DBand()
-        except Exception as e:
-            newVignette.saveInFile("{}/temp/{}".format(args.directoryFile,
-                                                       filename))
-            print(e)
-
-# Saving the Vignette
+        # Saving the Vignette
         angles3D = [20, 45, 50, 65]  # angles at which to save the plot3D
         elevs = [0, 30, 60]
         newVignette.saveAll(filename,
@@ -301,3 +265,15 @@ if __name__ == '__main__':
         break
 
     env.close()
+
+
+if __name__ == '__main__':
+
+    args = get_args()
+    print(args)
+    env = make_env(args.env_name, args.policy_type, args.max_episode_steps,
+                   args.env_obs_space_name)
+    create_data_folders()
+    directory = os.getcwd() + '/Models/'
+    policies, colors = load_policies(directory)
+    compute_vignette(args, env, policies, colors)
