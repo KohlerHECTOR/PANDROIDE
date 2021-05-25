@@ -17,6 +17,28 @@ Ce répértoire comprendra :
 
 # Utilisation du code
 
+## Etude avec Policy Gradient
+
+Pour lancer une etude avec PG
+Les plots et politiques peuvent être retrouvés dans le dossier **/data**
+
+Exemple de commande :
+
+```
+python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --population 10 --nb_repet 1 --nb_cycles 10 --nb_trajs 10 --nb_evals 5 --lr_actor 0.0001
+```
+
+## Etude avec Cross Entropy Method
+
+Pour lancer une etude avec CEM
+Les plots et politiques peuvent être retrouvés dans le dossier **/data**
+
+Exemple de commande :
+
+```
+python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --population 10 --nb_repet 1 --nb_cycles 10 --nb_trajs 10 --nb_evals 5 --lr_actor 0.0001
+```
+
 ## Comparaison entre Policy Gradient et Cross Entropy Method
 
 Pour lancer une comparaison entre PG et CEM
@@ -26,6 +48,28 @@ Exemple de commande :
 
 ```
 python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --population 10 --nb_repet 1 --nb_cycles 10 --nb_trajs 10 --nb_evals 5 --lr_actor 0.0001
+```
+
+## Etude sur Pendulum-v0 avec une politique experte simple
+
+Pour lancer une etude avec une politique experte simple
+
+Exemple de commande :
+
+```
+python3 simple_eval_expert.py
+```
+
+## Visualisation du Gradient
+
+Permet de creer une image pour visualiser le gradient entre la ou les politiques politiques misent dans le dossier **/Models**
+Ces images peuvent être retrouvées dans le dossier **/Gradient_output**
+La vignette sauvegardé au nom de **--filename** peut être retrouvé dans **/SavedGradient**
+
+Exemple de commande :
+
+```
+python3 main_gradient.py --filename gradient
 ```
 
 ## Visualisation du Paysage

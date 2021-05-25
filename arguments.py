@@ -106,7 +106,7 @@ def get_args():
     parser.add_argument('--save2D', default=True, type=bool)# true if want to save the 2D Vignette
     parser.add_argument('--save3D', default=True, type=bool)# true if want to save the 3D Vignette
     parser.add_argument('--directoryFile', default="SavedVignette", type=str)# name of the directory that will contain the vignettes
-    parser.add_argument('--filename', default="saved_vignette", type=str)  # name of the file to load/save the vignette
+    parser.add_argument('--filename', default="saved", type=str)  # name of the file to load/save the vignette
     parser.add_argument('--directory2D', default="Vignette_output", type=str)# name of the directory that will contain the 2D vignette
     parser.add_argument('--directory3D', default="Vignette_output", type=str)# name of the directory that will contain the 3D vignette
     # Tools parameters	#	Drawing parameters
