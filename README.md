@@ -106,3 +106,9 @@ python3 savedVignette.py --title "Landscape Test" --filename vignette_test
 ## Multi-Threading (UNSTABLE)
 
 Ajouter l'argument **--multi_treading True** dans votre commande pour effectuer les evaluations en multi-threading
+
+## Installation des dépendances
+
+```
+pip install -r requirements.txt
+```
