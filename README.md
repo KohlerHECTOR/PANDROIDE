@@ -50,6 +50,16 @@ Exemple de commande :
 python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --population 10 --nb_repet 1 --nb_cycles 10 --nb_trajs 10 --nb_evals 5 --lr_actor 0.0001
 ```
 
+Pour reproduire les résultats du rapport :
+
+```
+python3 main.py --study_name comparison --nb_trajs_cem 2 --nb_trajs_pg 50 --nb_cycles 1000 --nb_eval 500 --population 25 --nb_repet 5 --policy_type beta --start_from_same_policy True --env_name CartPoleContinuous-v0 --lr_actor 1e-4
+```
+
+```
+python3 main.py --study_name comparison --nb_trajs_cem 2 --nb_trajs_pg 50 --nb_cycles 1000 --nb_eval 500 --population 25 --nb_repet 5 --policy_type beta --start_from_same_policy True --env_name Pendulum-v0 --lr_actor 1e-4
+```
+
 ## Etude sur Pendulum-v0 avec une politique experte simple
 
 Pour lancer une etude avec une politique experte simple
