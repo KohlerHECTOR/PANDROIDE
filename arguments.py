@@ -79,6 +79,7 @@ def get_args():
     parser.add_argument('--plot_mode',type=str, default="all", help='to launch several studies at the same time')
     parser.add_argument('--nb_intervals',type=int, default=50, help='number of intervals for plot of segment')
     # vignettes
+    parser.add_argument('--title', default="Landscape", type=str)#Title of the vignette
     parser.add_argument('--nb_lines', default=5, type=int)# number of directions generated,good value : precise 100, fast 60, ultrafast 50
     parser.add_argument('--minalpha', default=0.0, type=float)# start value for alpha, good value : 0.0
     parser.add_argument('--nb_evals', default=5, type=int)# number of steps for the evaluation. Depends on environment.
@@ -105,6 +106,7 @@ def get_args():
     parser.add_argument('--save2D', default=True, type=bool)# true if want to save the 2D Vignette
     parser.add_argument('--save3D', default=True, type=bool)# true if want to save the 3D Vignette
     parser.add_argument('--directoryFile', default="SavedVignette", type=str)# name of the directory that will contain the vignettes
+    parser.add_argument('--filename', default="saved", type=str)  # name of the file to load/save the vignette
     parser.add_argument('--directory2D', default="Vignette_output", type=str)# name of the directory that will contain the 2D vignette
     parser.add_argument('--directory3D', default="Vignette_output", type=str)# name of the directory that will contain the 3D vignette
     # Tools parameters	#	Drawing parameters
@@ -121,7 +123,6 @@ def get_args():
     parser.add_argument('--saveImage', default=True, type=bool) # True if want to save the Image of the Gradient
     parser.add_argument('--directoryFileGrad', default="SavedGradient", type=str) # name of the directory where SavedGradient is saved
     parser.add_argument('--directoryImage', default="Gradient_output", type=str) # name of the output directory that will contain the image
-    parser.add_argument('--saved_file_name', default = 'new_grad_', type = str)
 
     '''
     parser.add_argument('--save-interval', type=int, default=5, help='the interval that save the trajectory')

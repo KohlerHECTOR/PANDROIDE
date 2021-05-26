@@ -51,7 +51,7 @@ def load_policies(folder):
     listdir = os.listdir(folder)
     policies = []
     for policy_file in listdir:
-        pw = PolicyWrapper(GenericNet(), "", "", "", 0)
+        pw = PolicyWrapper(GenericNet(), 0, "", "", "", 0)
         policy,_ = pw.load(directory+policy_file)
         policy = policy.get_weights()
         policies.append(policy)
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     newGradient = SavedGradient(directions=[], results=[], red_markers=[], green_markers=[],nbLines=args.line_height, pixelWidth=args.pixelWidth, pixelHeight=args.pixelHeight, maxValue=args.maxValue,dotText=args.dotText, dotWidth=args.dotWidth, xMargin=args.xMargin, yMargin=int(args.pixelHeight/2))
 
     for policy in policies:
-        filename = args.saved_file_name+".png"
+        filename = args.filename+".png"
 
 
 		# Load the model
