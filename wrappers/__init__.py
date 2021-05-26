@@ -6,3 +6,5 @@ from wrappers.binary_shifter_discrete import BinaryShifterDiscrete
 from wrappers.perf_writer import PerfWriter
 from wrappers.pendulum_wrapper import PendulumWrapper
 from wrappers.cmc_wrapper import MountainCarContinuousWrapper
+from wrappers.beta_action_wrapper_pendul import BetaWrapperPendul
+from wrappers.beta_action_wrapper_cartpole import BetaWrapperCartP
