@@ -183,7 +183,7 @@ class Simu:
 
         policy.set_weights(centroid)
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
-        pw.save(cycle = 0,score = initial_score)
+        pw.save(cycle = 0,method = 'CEM', score = initial_score)
         self.env.write_reward(cycle = 0, reward = initial_score)
         self.list_weights.append(centroid)
         #Set the weights with this random centroid

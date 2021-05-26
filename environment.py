@@ -1,7 +1,7 @@
 import gym
 import my_gym  # Necessary to see CartPoleContinuous, though PyCharm does not understand this
 import numpy as np
-from wrappers import FeatureInverter, BinaryShifter, BinaryShifterDiscrete, ActionVectorAdapter, \
+from wrappers import BetaWrapperCartP,BetaWrapperPendul,FeatureInverter, BinaryShifter, BinaryShifterDiscrete, ActionVectorAdapter, \
     PerfWriter, PendulumWrapper, MountainCarContinuousWrapper
 from gym.wrappers import TimeLimit
 
@@ -46,6 +46,8 @@ def make_env(env_name,
     if env_name == "CartPole-v0" or env_name == "CartPoleContinuous-v0":
         env = FeatureInverter(env, 1, 2)
         env = ActionVectorAdapter(env)
+        if policy_type == "beta":
+            env = BetaWrapperCartP(env)
 
     #### MODIF : added actionVectorAdapter on Mountain car.
     if env_name == "MountainCar-v0":
@@ -63,9 +65,12 @@ def make_env(env_name,
 
     if env_name == "Pendulum-v0":
         env = PendulumWrapper(env)
+        if policy_type == "beta":
+            env = BetaWrapperPendul(env)
 
     if env_name == "MountainCarContinuous-v0":
         env = MountainCarContinuousWrapper(env)
+
 
     env = PerfWriter(env)
     #print(env)
