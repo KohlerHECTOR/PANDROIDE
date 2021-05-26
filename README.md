@@ -23,11 +23,6 @@ Ce répértoire comprendra :
 Pour lancer une comparaison entre PG et CEM
 Les plots et politiques peuvent être retrouvés dans le dossier **/data**
 
-Exemple de commande :
-
-```
-python3 main.py --env_name CartPoleContinuous-v0 --study_name comparison --population 10 --nb_repet 1 --nb_cycles 10 --nb_trajs 10 --nb_evals 5 --lr_actor 0.0001
-```
 
 Pour reproduire les résultats du rapport :
 
