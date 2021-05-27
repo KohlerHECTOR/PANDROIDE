@@ -121,11 +121,11 @@ def exploit_angles_global_full(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
     for i in range(len(study)):
-        plot_data(path + "/angle_" + params.study_name+study[i] + '_' + params.env_name + '.txt', "angles " )
+        plot_data(path + "/angle_" + params.study_name+study[i] + '_' + params.env_name + '.txt', "scalar product " )
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("Angle")
+    plt.ylabel("Scalar Product")
     plt.legend(loc="best")
     plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
     plt.clf()
@@ -134,13 +134,13 @@ def exploit_angles_global_full_comparison(params) -> None:
     path = os.getcwd() + "/data/save"
     study = params.gradients
     for i in range(len(study)):
-        plot_data(path + "/angle_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "angles pg")
-        plot_data(path + "/angle_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "angles cem")
+        plot_data(path + "/angle_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "scalar product pg")
+        plot_data(path + "/angle_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "scalar product cem")
         # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("angles")
+    plt.ylabel("scalar product")
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
     plt.clf()
