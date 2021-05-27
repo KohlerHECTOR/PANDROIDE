@@ -96,13 +96,14 @@ def evaluate_policy(params, env, weights):
             total_reward = 0
             for t in range(params.max_episode_steps):
                 action = policy.select_action(state, params.deterministic_eval)
-                if params.policy_type == "normal":
-                    next_state, reward, done, _ = env.step(action)
-                elif params.policy_type == "beta":
-                    if params.env_name == "Pendulum-v0":
-                        next_state, reward, done, _ = env.step(2 * (2 * action - 1))
-                    elif params.env_name == "CartPoleContinuous-v0":
-                        next_state, reward, done, _ = env.step(2 * action - 1)
+                next_state, reward, done, _ = env.step(action)
+                # if params.policy_type == "normal":
+                #     next_state, reward, done, _ = env.step(action)
+                # elif params.policy_type == "beta":
+                #     if params.env_name == "Pendulum-v0":
+                #         next_state, reward, done, _ = env.step(2 * (2 * action - 1))
+                #     elif params.env_name == "CartPoleContinuous-v0":
+                #         next_state, reward, done, _ = env.step(2 * action - 1)
                 total_reward += reward
                 state = next_state
                 if done:
