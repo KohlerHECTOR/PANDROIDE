@@ -24,19 +24,20 @@ def eval(env):
 
 
 def expert_policy(angle, velocity):
-    if (velocity < (-0.053*angle)):
-        if ((velocity <= 0) and (angle <= -50)):
-            return -2
+    fact = 6
+    if (velocity < (-0.05*angle)):
+        if ((velocity <= 0) and (angle <= -92)):
+            return -2*min(1,angle/fact)
         else:
-            return 2
-    if (velocity >= (-0.053*angle)):
-        if ((velocity >= 0) and (angle >= 50)):
-            return 2
+            return 2*min(1,angle/fact)
+    if (velocity >= (-0.05*angle)):
+        if ((velocity >= 0) and (angle >= 92)):
+            return 2*min(1,angle/fact)
         else:
-            return -2
+            return -2*min(1,angle/fact)
 
 env = gym.make("Pendulum-v0")
 res=eval(env)
-print(np.mean(np.array(res)))
+print("moyenne :", np.mean(np.array(res)))
 plt.plot(res)
 plt.show()
