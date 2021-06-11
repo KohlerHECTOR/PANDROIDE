@@ -25,7 +25,7 @@ python3 main.py --expriment pg --env_name Pendulum-v0 --policy_type normal --cri
 To study the CEM you can use:
 
 ```
-python3 main.py --experiment cem --population 20 --elite_frac 0.2 --sigma 1 --nb_trajs_cem 2
+python3 main.py --experiment cem --population 20 --elites_frac 0.2 --sigma 1 --nb_trajs_cem 2
 ```
 
 ## Etude sur Pendulum-v0 avec une politique experte simple
