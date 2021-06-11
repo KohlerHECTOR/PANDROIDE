@@ -105,49 +105,19 @@ class Simu:
          :param render: whether the episode is displayed or not (True or False)
          :return: the total reward collected during the episode
          """
-        if params.multi_threading:
-            ray.init(include_dashboard=False)
-
-            @ray.remote
-            def eval(params, nb_evals, sim):
-                average_tot_score = 0
-                for j in range(nb_evals):
-                    state = sim.env.reset()
-                    total_reward = 0
-                    for t in range(params.max_episode_steps):
-                        action = policy.select_action(state, deterministic)
-                        next_state, reward, done, _ = sim.env.step(action)
-                        total_reward += reward
-                        state = next_state
-                        if done:
-                            average_tot_score += total_reward
-                            break
-                return average_tot_score / nb_evals
-
-            workers = os.cpu_count()
-            evals = int(params.nb_evals / workers)
-            sim_list = []
-            for i in range(workers):
-                sim_list.append(Simu.Simulator(params.env_name))
-            futures = [eval.remote(params, evals, sim) for sim in sim_list]
-            returns = ray.get(futures)
-            ray.shutdown()
-            average_tot_score = np.sum(returns) / workers
-            return average_tot_score
-        else:
-            average_reward = 0
-            for i in range(params.nb_evals):
-                total_reward = 0
-                done = False
-                state = self.reset(render)
-                while not done:
-                    action = policy.select_action(state, deterministic)
-                    next_state, reward, done, _ = self.env.step(action)
-                    total_reward += reward
-                    state = next_state
-                average_reward += total_reward
-            average_reward /= params.nb_evals
-            return average_reward
+        average_reward = 0
+        for i in range(params.nb_evals):
+            total_reward = 0
+            done = False
+            state = self.reset(render)
+            while not done:
+                action = policy.select_action(state, deterministic)
+                next_state, reward, done, _ = self.env.step(action)
+                total_reward += reward
+                state = next_state
+            average_reward += total_reward
+        average_reward /= params.nb_evals
+        return average_reward
 
     def train_cem(self, pw, params, policy) -> None:
         """
@@ -161,11 +131,6 @@ class Simu:
         self.best_reward = -1e38
         self.best_weights_idx = 0
 
-        # Print the number of workers with the multi-thread
-        if params.multi_threading:
-            workers = os.cpu_count()
-            evals = int(params.nb_evals / workers)
-            print("\n Multi-Threading Evals : " + str(workers) + " workers with each " + str(evals) + " evals to do")
 
         print("Shape of weights vector is: ", policy.get_weights_dim())
 
@@ -265,12 +230,6 @@ class Simu:
             starting_weights = get_starting_weights(pw)
             policy.set_weights(starting_weights)
 
-        # Print the number of workers with the multi-thread
-        if params.multi_threading:
-            workers = min(16, os.cpu_count() + 4)
-            evals = int(params.nb_evals / workers)
-            print("\n Multi-Threading Evaluations : " + str(workers) + " workers with each " + str(
-                evals) + " evaluations to do")
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
@@ -293,7 +252,6 @@ class Simu:
                 # policy evaluation part
                 if (cycle % params.eval_freq) == 0:
                     total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-                    print(total_reward)
                     # wrote and store reward
                     self.env.write_reward(cycle + 1, total_reward)
                     self.list_rewards[cycle] = total_reward
@@ -313,67 +271,6 @@ class Simu:
         print("Best reward: ", self.best_reward)
         print("Best reward iter: ", self.best_weights_idx)
 
-    def train_evo_pg(self, pw, params, policy) -> None:
-        self.list_weights = np.zeros((int(params.nb_cycles), policy.get_weights_dim()))
-        self.best_weights = np.zeros(policy.get_weights_dim())
-        self.list_rewards = np.zeros((int(params.nb_cycles)))
-        self.best_reward = -1e38
-        self.best_weights_idx = 0
-
-        print("Shape of weights vector is: ", np.shape(self.best_weights))
-
-        # Init the first centroid randomly
-        centroid = np.array(params.sigma * np.random.randn(policy.get_weights_dim()))
-        # Set the weights with this random centroid
-        policy.set_weights(centroid)
-        # Init the noise matrix
-        noise = np.diag(np.ones(policy.get_weights_dim()) * params.sigma)
-        # Init the covariance matrix
-        var = np.diag(np.ones(policy.get_weights_dim()) * np.var(centroid)) + noise
-        # Init the rng
-        rng = np.random.default_rng()
-        # Training Loop
-        for cycle in range(params.nb_cycles):
-            rewards = np.zeros(params.population)
-            weights = rng.multivariate_normal(centroid, var, params.population)
-            for p in range(params.population):
-                policy.set_weights(weights[p])
-                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
-                rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
-
-            elites_nb = int(params.elites_frac * params.population)
-            elites_idxs = rewards.argsort()[-elites_nb:]
-            elites_weights = [weights[i] for i in elites_idxs]
-            for i in range(len(elites_weights)):
-                policy.set_weights(elites_weights[i])
-                batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
-                batch.train_policy_td(policy)
-                elites_weights[i] = policy.get_weights()
-
-            # update the best weights
-            centroid = np.array(elites_weights).mean(axis=0)
-            var = np.cov(elites_weights, rowvar=False) + noise
-
-            # policy evaluation part
-            policy.set_weights(centroid)
-
-            self.list_weights[cycle] = policy.get_weights()
-
-            # policy evaluation part
-            total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
-            # print(total_reward)
-            # write and store reward
-            self.env.write_reward(cycle, total_reward)
-            self.list_rewards[cycle] = total_reward
-            # plot_trajectory(batch2, self.env, cycle+1)
-
-            # save best reward agent (no need for averaging if the policy is deterministic)
-            if self.best_reward < total_reward:
-                self.best_reward = total_reward
-                self.best_weights = self.list_weights[cycle]
-                self.best_weights_idx = cycle
-            # Save the best policy obtained
-            pw.save(method="Evo_pg", cycle=cycle, score=total_reward)
 
     def write_angles_global(self, cycle):
         if cycle == 1:
