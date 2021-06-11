@@ -17,7 +17,7 @@ Plots and models are found in the /data folder.
 
 For classic reinforce use --reinforce True. Otherwise you can build your own policy gradient algorithm like this for exemple: 
 ```
-python3 main.py --expriment pg --env_name Pendulum-v0 --policy_type normal --critic_update_method dataset --study_name discount --gamma 0.99 --lr_critic 1e-2 --gradients sum+baseline --critic_estim_method td --nb_trajs_pg 20
+python3 main.py --experiment pg --env_name Pendulum-v0 --policy_type normal --critic_update_method dataset --study_name discount --gamma 0.99 --lr_critic 1e-2 --gradients sum+baseline --critic_estim_method td --nb_trajs_pg 20
 ```
 
 ## Study of CEM
