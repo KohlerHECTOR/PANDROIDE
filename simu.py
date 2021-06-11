@@ -166,7 +166,7 @@ class Simu:
                 for p in range(params.population):
                     policy.set_weights(weights[p])
                     batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
-                    rewards[p] = batch.train_policy_cem(policy, params.bests_frac)
+                    rewards[p] = batch.train_policy_cem(policy)
 
                 elites_nb = int(params.elites_frac * params.population)
                 elites_idxs = rewards.argsort()[-elites_nb:]

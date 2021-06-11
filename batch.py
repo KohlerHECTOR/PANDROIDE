@@ -156,7 +156,7 @@ class Batch:
 
 
 
-    def train_policy_cem(self, policy, bests_frac):
+    def train_policy_cem(self, policy):
         """
         Trains a policy through a CEM from a batch of data
         :param policy: the trained policy
@@ -173,7 +173,7 @@ class Batch:
             rewards.append(reward)
 
         rewards = np.array(rewards)
-        bests_nb = int(bests_frac * self.size)
+        bests_nb = self.size
         bests_idxs = rewards.argsort()[-bests_nb:]
         bests_rewards = [rewards[i] for i in bests_idxs]
         #print(rewards)

@@ -38,10 +38,10 @@ def get_args():
     parser.add_argument('--render', type=bool, default=False,
                         help='visualize the run or not')  # Only False when not used
     # study settings
-    parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem, evo_pg')
+    parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem')
     parser.add_argument('--critic_update_method', type=str, default="dataset",
                         help='critic update method: batch or dataset')
-    parser.add_argument('--policy_type', type=str, default="normal",
+    parser.add_argument('--policy_type', type=str, default="beta",
                         help='policy type: bernoulli, normal, squashedGaussian, discrete, beta')
     parser.add_argument('--team_name', type=str, default='default_team', help='team name')
     parser.add_argument('--deterministic_eval', type=bool, default=True,
@@ -57,7 +57,6 @@ def get_args():
     parser.add_argument('--gradients', type=str, nargs='+', default=['sum'], help='other: baseline, beta')
     parser.add_argument('--critic_estim_method', type=str, default="td",
                         help='critic estimation method: mc, td or nstep')
-    parser.add_argument('--fix_layers', type=str, default=False, help='only for normal')
     # learning parameters
     parser.add_argument('--start_from_policy', type=bool, default=False, help='only for normal')
     parser.add_argument('--start_from_same_policy', type=bool, default=False, help='only for normal')
@@ -68,15 +67,13 @@ def get_args():
     parser.add_argument('--beta', type=float, default=0.1, help='temperature in AWR-like learning')
     parser.add_argument('--nstep', type=int, default=5, help='n in n-step return')
     parser.add_argument('--batch_size', type=int, default=64, help='size of a minibatch')
-    parser.add_argument('--nb_workers', type=int, default=2, help='number of cpus to collect samples')
     parser.add_argument('--shuffle', type=bool, default=True,
                         help='shuffle replay samples or not')  # Only False when not used
     parser.add_argument('--max_episode_steps', type=int, default=200, help='duration of an episode (step limit)')
-    parser.add_argument('--sigma', type=float, default=1.0, help='noise')
+    parser.add_argument('--sigma', type=float, default=1.0, help='noise for cem covariance matrix')
     parser.add_argument('--elites_frac', type=float, default=0.2,
-                        help='proportion of the population to keep at each iter')
-    parser.add_argument('--bests_frac', type=float, default=1, help='proportion of the population to keep at each iter')
-    parser.add_argument('--population', type=int, default=15, help='population size')
+                        help='proportion of the population to keep at each iter for cem')
+    parser.add_argument('--population', type=int, default=15, help='population size for cem')
 
     # evaluation settings
     parser.add_argument('--eval_freq', default=1, type=int)  # frequency for evaluation.
