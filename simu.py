@@ -149,6 +149,7 @@ class Simu:
 
         policy.set_weights(centroid)
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
+        total_reward = initial_score
         pw.save(cycle=0, method='CEM', score=initial_score)
         self.env.write_reward(cycle=0, reward=initial_score)
         self.list_weights.append(centroid)
@@ -238,6 +239,7 @@ class Simu:
 
         print("Shape of weights vector is: ", np.shape(self.best_weights))
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
+        total_reward = initial_score
         pw.save(cycle=0, score=initial_score)
         self.env.write_reward(cycle=0, reward=initial_score)
         with SlowBar('Performing a repetition of PG', max=params.nb_cycles-1) as bar:
