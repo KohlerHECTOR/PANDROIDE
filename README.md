@@ -12,11 +12,22 @@ Les plots et politiques peuvent être retrouvés dans le dossier **/data**
 Pour reproduire les résultats du rapport :
 
 ```
-python3 main.py --experiment comparison --env_name Pendulum-v0 --policy_type normal --nb_repet 1 --nb_eval 1 --eval_freq 20 --nb_trajs_cem 1 --nb_trajs_pg 20 --population 15 --lr_actor 1e-4
+python3 main.py --experiment comparison --env_name Pendulum-v0 --policy_type normal --nb_repet 1 --nb_eval 1 --eval_freq 20 --nb_trajs_cem 1 --reinforce True --nb_trajs_pg 20 --population 15 --lr_actor 1e-4
 ```
 
+## Study of PG 
+
+For classic reinforce use --reinforce True. Otherwise you can build your own policy gradient algorithm like this for exemple: 
 ```
-python3 main.py --study_name comparison --nb_trajs_cem 2 --nb_trajs_pg 50 --nb_cycles 1000 --nb_eval 500 --population 25 --nb_repet 5 --policy_type beta --start_from_same_policy True --env_name Pendulum-v0 --lr_actor 1e-4
+python3 main.py --expriment pg --env_name Pendulum-v0 --policy_type normal --critic_update_method dataset --study_name discount --gamma 0.99 --lr_critic 1e-2 --gradients sum+baseline --critic_estim_method td --nb_trajs_pg 20
+```
+
+## Study of CEM
+
+To study the CEM you can use:
+
+```
+python3 main.py --experiment cem --population 20 --elite_frac 0.2 --sigma 1 --nb_trajs_cem 2
 ```
 
 ## Etude sur Pendulum-v0 avec une politique experte simple
