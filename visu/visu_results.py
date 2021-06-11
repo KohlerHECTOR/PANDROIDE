@@ -64,7 +64,8 @@ def exploit_reward_full(params) -> None:
     study = params.gradients
     for i in range(len(study)):
         plot_data(path + "/reward_" + params.experiment+study[i] + '_' + params.env_name + '.txt', "reward "+params.experiment)
-    plt.xticks(range(params.nb_cycles//params.eval_freq),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
+    if params.eval_freq != 1:
+        plt.xticks(range((params.nb_cycles-1)//params.eval_freq +1 ),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
@@ -94,7 +95,8 @@ def exploit_reward_full_comparison(params) -> None:
         plot_data(path + "/reward_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "reward pg")
         plot_data(path + "/reward_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "reward cem")
         # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
-    plt.xticks(range(params.nb_cycles//params.eval_freq +1 ),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
+    if params.eval_freq != 1:
+        plt.xticks(range((params.nb_cycles-1)//params.eval_freq +1 ),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
