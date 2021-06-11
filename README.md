@@ -1,4 +1,5 @@
-New version of Olivier Sigaud's code https://github.com/osigaud/Basic-Policy-Gradient-Labs that includes CEM (Cross Entropy Method), new visualisations, and a Beta policy.
+New version of Olivier Sigaud's code https://github.com/osigaud/Basic-Policy-Gradient-Labs that includes CEM (Cross Entropy Method), new visualisations, and a Beta policy. 
+You can find slides of a short presentation about the kind of experiments you can do with this code in /RAPPORT/slides_soutenance.pf (in French).
 
 # Code usage
 
