@@ -50,15 +50,15 @@ def get_args():
     parser.add_argument('--nb_cycles', type=int, default=40, help='number of training cycles')
     parser.add_argument('--nb_trajs', type=int, default=20, help='number of trajectories in a MC batch')
     parser.add_argument('--nb_trajs_cem', type=int, default=None, help='number of trajectories in a MC batch for cem')
-    parser.add_argument('--nb_trajs_pg', type=int, default=None, help='number of trajectories in a MC batch for pg')
+    parser.add_argument('--nb_trajs_pg', type=int, default=20, help='number of trajectories in a MC batch for pg')
     parser.add_argument('--nb_batches', type=int, default=20, help='number of updates of the network using datasets')
     # algo settings
     parser.add_argument('--gradients', type=str, nargs='+', default=['sum'], help='other: baseline, beta')
     parser.add_argument('--critic_estim_method', type=str, default="td",
                         help='critic estimation method: mc, td or nstep')
     # learning parameters
-    parser.add_argument('--start_from_policy', type=bool, default=False, help='only for normal')
-    parser.add_argument('--start_from_same_policy', type=bool, default=False, help='only for normal')
+    parser.add_argument('--start_from_policy', type=bool, default=False, help='give a starting policy in /Models. Must be of same type as --policy_type')
+    parser.add_argument('--start_from_same_policy', type=bool, default=True, help='force pg and cem to start exploration from same point in space')
 
     parser.add_argument('--gamma', type=float, default=1, help='discount factor')
     parser.add_argument('--lr_actor', type=float, default=0.0001, help='learning rate of the actor')
