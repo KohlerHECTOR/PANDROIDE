@@ -50,5 +50,5 @@ pip install -r requirements.txt
 Compatibility between CEM and Bernoulli Policy.
 Fix plot axes and problem of last eval.
 Make a "CustomNetwork" class with dim of NN and policy type as arguments. 
-Compatibility of simple_rendering.py with all types of policy.
+Compatibility of simple_rendering.py with all types of policy. Rebuild code for comparison so it runs both algo independently and then build plots.
 
