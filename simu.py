@@ -4,8 +4,10 @@ from itertools import count
 from batch import Episode, Batch
 from environment import make_env
 from slowBar import SlowBar
-import ray
+from algo import Algo
 import gym
+from visu.visu_trajectories import plot_trajectory
+from visu.visu_weights import plot_weight_histograms, plot_normal_histograms
 
 
 def get_starting_weights(pw):
@@ -168,6 +170,7 @@ class Simu:
                 for p in range(params.population):
                     policy.set_weights(weights[p])
                     batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy, True)
+                    batch.sum_rewards()
                     rewards[p] = batch.train_policy_cem(policy)
 
                 elites_nb = int(params.elites_frac * params.population)
@@ -207,7 +210,7 @@ class Simu:
         print("Best reward: ", self.best_reward)
         print("Best reward iter: ", self.best_weights_idx)
 
-    def train_pg(self, pw, params, policy, policy_loss_file) -> None:
+    def train_pg(self, pw, params, policy, critic, policy_loss_file, critic_loss_file, study_name, beta=0) -> None:
         """
         The main function for training and evaluating a policy
         Repeats training and evaluation params.nb_cycles times
@@ -240,10 +243,29 @@ class Simu:
         with SlowBar('Performing a repetition of PG', max=params.nb_cycles-1) as bar:
             for cycle in range(1,params.nb_cycles):
                 batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
-                batch.sum_rewards()
-                policy_loss = batch.train_policy_td(policy)
+                if params.reinforce:
+                    batch.sum_rewards()
+                    policy_loss = batch.train_policy_td(policy)
                 # self.env.write_gradients(gradient_angles,cycle)
-                policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
+                    policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
+                    batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
+
+                else:
+                    # Update the policy
+                    batch2 = batch.copy_batch()
+                    algo = Algo(params.study_name, params.critic_estim_method, policy, critic, params.gamma, beta, params.nstep)
+                    algo.prepare_batch(batch)
+                    policy_loss = batch.train_policy_td(policy)
+
+                    # Update the critic
+                    assert params.critic_update_method in ['batch', 'dataset'], 'unsupported critic update method'
+                    if params.critic_update_method == "dataset":
+                        critic_loss = algo.train_critic_from_dataset(batch2, params)
+                    elif params.critic_update_method == "batch":
+                        critic_loss = algo.train_critic_from_batch(batch2)
+                    critic_loss_file.write(str(cycle) + " " + str(critic_loss) + "\n")
+                    policy_loss_file.write(str(cycle) + " " + str(policy_loss) + "\n")
+                    plot_trajectory(batch2, self.env, cycle+1)
 
                 # add the new weights to the list of weights
                 self.list_weights.append(policy.get_weights())

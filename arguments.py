@@ -29,16 +29,15 @@ def get_args():
     :return: the complete list of arguments
     """
     parser = argparse.ArgumentParser()
-    # multi-threading setting ##UNSTABLE
-    parser.add_argument('--multi_threading', type=bool, default=False,
-                        help='multi-threading for high number of evaluations')
     # environment setting
     parser.add_argument('--env_name', type=str, default='Pendulum-v0', help='the environment name')
     parser.add_argument('--env_obs_space_name', type=str, default=["pos", "angle"])  # ["pos", "angle", "vx", "v angle"]
     parser.add_argument('--render', type=bool, default=False,
                         help='visualize the run or not')  # Only False when not used
     # study settings
-    parser.add_argument('--study_name', type=str, default='pg', help='study name: pg, regress, nstep, cem')
+    parser.add_argument('--study_name', type=str, default='sum', help='beta sum discount normalize baseline nstep')
+    parser.add_argument('--experiment', type= str, default = 'comparison', help = 'cem, pg, comparison')
+    parser.add_argument('--reinforce', type=bool, default = False, help='wether you want to study a reinforce algo or another pg based algo')
     parser.add_argument('--critic_update_method', type=str, default="dataset",
                         help='critic update method: batch or dataset')
     parser.add_argument('--policy_type', type=str, default="beta",
@@ -70,6 +69,7 @@ def get_args():
     parser.add_argument('--shuffle', type=bool, default=True,
                         help='shuffle replay samples or not')  # Only False when not used
     parser.add_argument('--max_episode_steps', type=int, default=200, help='duration of an episode (step limit)')
+    parser.add_argument('--nb_workers', type=int, default=2, help='number of cpus to collect samples')
     parser.add_argument('--sigma', type=float, default=1.0, help='noise for cem covariance matrix')
     parser.add_argument('--elites_frac', type=float, default=0.2,
                         help='proportion of the population to keep at each iter for cem')
@@ -80,6 +80,6 @@ def get_args():
     parser.add_argument('--save_freq', default=1, type=int)  # frequency for saving evaluation.
     parser.add_argument('--nb_evals', default=5,
                         type=int)  # number of steps for the evaluation. Depends on environment.
-     
+
     args = parser.parse_args()
     return args

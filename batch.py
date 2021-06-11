@@ -125,8 +125,6 @@ class Batch:
         """
         do_print = False
         losses = []
-        # gradient_vect = [policy.get_weights()]
-        # gradient_angles = []
         if do_print: print("training data :")
         for j in range(self.size):
             episode = self.episodes[j]
@@ -137,11 +135,6 @@ class Batch:
             if do_print: print("action", action)
             if do_print: print("reward", reward)
             policy_loss = policy.train_pg(state, action, reward)
-            # gradient = policy.get_grads()
-            # gradient_vect.append(gradient)
-            # if j >=1:
-            #     angle = self.get_angle_with_grad(gradient_vect)
-            #     gradient_angles.append(angle)
             if do_print: print("loss", policy_loss)
             policy_loss = policy_loss.data.numpy()
             mean_loss = policy_loss.mean()
@@ -149,10 +142,6 @@ class Batch:
         if do_print: print("end of training data :")
         return np.array(losses).mean()#, gradient_angles
 
-    def get_angle_with_grad(self, gradient_vect):
-        unit_vector_1 = (gradient_vect[-2] - gradient_vect[-3])/np.linalg.norm(gradient_vect[-2] - gradient_vect[-3])
-        unit_vector_2 = (gradient_vect[-1] - gradient_vect[-2])/np.linalg.norm(gradient_vect[-1] - gradient_vect[-2])
-        return np.dot(unit_vector_1,unit_vector_2)
 
 
 
@@ -168,20 +157,9 @@ class Batch:
         for j in range(self.size):
             episode = self.episodes[j]
             if do_print: print("reward", reward)
-            reward = np.sum(episode.reward_pool)
-            #reward = episode.reward_pool[-1]
-            rewards.append(reward)
-
-        rewards = np.array(rewards)
-        bests_nb = self.size
-        bests_idxs = rewards.argsort()[-bests_nb:]
-        bests_rewards = [rewards[i] for i in bests_idxs]
-        #print(rewards)
-        average_reward = np.mean(bests_rewards)
-        #average_reward = np.mean(rewards)
-        #print(average_reward)
+            rewards.append(np.array(episode.reward_pool).mean())
         if do_print: print("end of training data :")
-        return average_reward
+        return np.array(rewards).mean()
 
     def train_policy_through_regress(self, policy):
         """

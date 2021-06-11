@@ -124,7 +124,7 @@ def study_pg(params, starting_pol=None) -> None:
                 critic = VNetwork(simu.obs_size, 24, 36, 1, params.lr_critic)
             # plot_critic(simu, critic, policy, study[i], '_ante_', j)
 
-            simu.train_pg(pw, params, policy, policy_loss_file)
+            simu.train_pg( pw, params, policy, critic, policy_loss_file, critic_loss_file, study[i])
             plot_policy(policy, simu.env, True, simu.env_name, study[i], '_post_', j, plot=False)
         plot_critic(simu, critic, policy, study[i], '_post_', j)
         critic.save_model('data/critics/' + params.env_name + '#' + params.team_name + '#' + study[i] + str(j) + '.pt')
@@ -149,13 +149,13 @@ if __name__ == '__main__':
     starting_pol = None
     print(args)
     create_data_folders()
-    if args.study_name == 'cem':
+    if args.experiment == 'cem':
         study_cem(args)
         plot_results(args)
-    elif args.study_name == 'pg':
+    elif args.experiment == 'pg':
         study_pg(args)
         plot_results(args)
-    elif args.study_name == 'comparison':
+    elif args.experiment == 'comparison':
         if args.start_from_same_policy:
             starting_pol = get_same_starting_policies(args)
 
