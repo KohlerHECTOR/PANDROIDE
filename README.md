@@ -44,42 +44,6 @@ Exemple de commande :
 python3 simple_eval_expert.py
 ```
 
-## Visualisation du Gradient
-
-Permet de creer une image pour visualiser le gradient entre la ou les politiques politiques misent dans le dossier **/Models**
-Ces images peuvent être retrouvées dans le dossier **/Gradient_output**
-La vignette sauvegardée au nom de **--filename** peut être retrouvée dans **/SavedGradient**
-
-Exemple de commande :
-
-```
-python3 main_gradient.py --filename gradient
-```
-
-## Visualisation du Paysage
-
-Permet de creer le paysage autour d'une politique ou plusieurs politiques misent dans le dossier **/Models**
-Les vignettes peuvent être retrouvées dans le dossier **/Vignette_output**
-La vignette sauvegardée au nom de **--filename** peut être retrouvée dans **/SavedVignette**
-
-Exemple de commande :
-
-```
-python3 main_vignettes.py --nb_lines 15 --nb_evals 5 --maxalpha 50 --stepalpha 1 --title "Landscape" --filename vignette
-```
-
-Permet de visualiser le paysage d'une vignette déjà faite, en partant d'un fichier de **/SavedVignette**
-Les vignettes peuvent être retrouvées dans le dossier **/Vignette_output**
-
-Exemple de commande :
-
-```
-python3 savedVignette.py --title "Landscape Test" --filename vignette_test
-```
-
-## Multi-Threading (UNSTABLE)
-
-Ajouter l'argument **--multi_treading True** dans votre commande pour effectuer les evaluations en multi-threading
 
 ## Installation des dépendances
 
