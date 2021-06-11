@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from arguments import make_full_string, get_args
 import seaborn as sns
+from numpy import arange
 sns.set()
 
 # This file contains variance functions to plot results
@@ -24,14 +25,10 @@ def plot_data(filename, label):
     data = pd.read_csv(filename, sep=' ', names=list(range(data.shape[1])))
     x1 = list(data.groupby([0]).quantile(0.75)[1])
     x2 = list(data.groupby([0]).quantile(0.25)[1])
-    if (len(set(list(data.iloc[:, 0]))) == len(list(data.iloc[:, 0]))):
-        x_index = list(data.iloc[:, 0])
-    else:
-        x_index = list(range(len(x1)))
     x_mean = list(data.groupby([0]).mean()[1])
     x_std = list(data.groupby([0]).std()[1])
-    plt.plot(x_index, x_mean, label=label)
-    plt.fill_between(x_index, x1, x2, alpha=0.25)
+    plt.plot(x_mean, label=label)
+    plt.fill_between(list(range(len(x1))), x1, x2, alpha=0.25)
     return x_mean, x_std
 
 
@@ -67,7 +64,7 @@ def exploit_reward_full(params) -> None:
     study = params.gradients
     for i in range(len(study)):
         plot_data(path + "/reward_" + params.study_name+study[i] + '_' + params.env_name + '.txt', params.study_name +'_'+"reward " + study[i])
-
+    plt.xticks(range(params.nb_cycles//params.eval_freq),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
@@ -86,21 +83,9 @@ def exploit_cov_full(params) -> None:
     plt.ylabel("Covariance Norm")
     plt.legend(loc="best")
     plt.savefig(path + '/../results/covariance_' + make_full_string(params) + '.pdf')
+    plt.show()
     plt.clf()
 
-def exploit_angles_full(params) -> None:
-    path = os.getcwd() + "/data/save"
-    study = params.gradients
-    for i in range(len(study)):
-        for cycle in range(params.nb_cycles):
-            plot_data(path + "/gradient_angles_" +"#"+ str(cycle) +'.txt', params.study_name +'_'+"gradient_angles " )
-
-            plt.title(params.env_name)
-            plt.xlabel("traj_in_batch")
-            plt.ylabel("angle")
-            plt.legend(loc="best")
-            plt.savefig(path + '/../results/gradient_angles/gradient_angles_'+'#'+str(cycle) + make_full_string(params) + '.pdf')
-            plt.clf()
 
 def exploit_reward_full_comparison(params) -> None:
     path = os.getcwd() + "/data/save"
@@ -109,7 +94,7 @@ def exploit_reward_full_comparison(params) -> None:
         plot_data(path + "/reward_" + 'pg'+study[i] + '_' + params.env_name + '.txt', "reward pg")
         plot_data(path + "/reward_" + 'cem'+study[i] + '_' + params.env_name + '.txt', "reward cem")
         # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
-
+    plt.xticks(range(params.nb_cycles//params.eval_freq +1 ),labels = arange(0, params.nb_cycles, params.eval_freq).astype(str))
     plt.title(params.env_name)
     plt.xlabel("Episodes")
     plt.ylabel("Reward")
@@ -125,9 +110,10 @@ def exploit_angles_global_full(params) -> None:
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("Scalar Product")
+    plt.ylabel("Scalar Product between weights of episode x and x+1")
     plt.legend(loc="best")
     plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
+    plt.show()
     plt.clf()
 
 def exploit_angles_global_full_comparison(params) -> None:
@@ -140,9 +126,10 @@ def exploit_angles_global_full_comparison(params) -> None:
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("scalar product")
+    plt.ylabel("Scalar Product between weights of episode x and x+1")
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/angles_' + make_full_string(params) + '.pdf')
+    plt.show()
     plt.clf()
 
 def exploit_distance(params) -> None:
@@ -155,9 +142,10 @@ def exploit_distance(params) -> None:
 
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("distance")
+    plt.ylabel("distance between policies at episode x and x+1 ")
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/distances_' + make_full_string(params) + '.pdf')
+    plt.show()
     plt.clf()
 
 def exploit_distance_solo(params) -> None:
@@ -166,12 +154,12 @@ def exploit_distance_solo(params) -> None:
     for i in range(len(study)):
         plot_data(path + "/reward_" + params.study_name+study[i] + '_' + params.env_name + '.txt', "distance")
         # plot_data(path + "/reward_" + 'evo_pg'+study[i] + '_' + params.env_name + '.txt', "reward evo_pg")
-
     plt.title(params.env_name)
     plt.xlabel("Episodes")
-    plt.ylabel("distance")
+    plt.ylabel("distance between policies at episode x and x+1 ")
     plt.legend(loc="lower right")
     plt.savefig(path + '/../results/distances_' + make_full_string(params) + '.pdf')
+    plt.show()
     plt.clf()
 
 
@@ -180,7 +168,7 @@ def exploit_critic_loss_full(params) -> None:
     study = params.gradients
     for i in range(len(study)):
         plot_data(path + "/critic_loss_" + study[i] + '_' + params.env_name + '.txt', "critic loss " + study[i])
-
+    plt.xticks(range(params.nb_cycles - 1),labels = arange(1,params.nb_cycles))
     plt.xlabel("Cycles")
     plt.ylabel("Loss")
     plt.legend(loc="upper right")
@@ -194,7 +182,7 @@ def exploit_policy_loss_full(params) -> None:
     study = params.gradients
     for i in range(len(study)):
         plot_data(path + "/policy_loss_" + study[i] + '_' + params.env_name + '.txt', "policy loss " + study[i])
-
+    plt.xticks(range(params.nb_cycles - 1), labels = arange(1,params.nb_cycles))
     plt.xlabel("Cycles")
     plt.ylabel("Loss")
     plt.legend(loc="lower right")

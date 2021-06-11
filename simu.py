@@ -129,6 +129,7 @@ class Simu:
         self.best_weights = np.zeros(policy.get_weights_dim())
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
+        total_reward = self.best_reward
         self.best_weights_idx = 0
 
 
@@ -155,12 +156,13 @@ class Simu:
         noise = np.diag(np.ones(policy.get_weights_dim()) * params.sigma)
         # Init the covariance matrix
         var = np.diag(np.ones(policy.get_weights_dim()) * np.var(centroid)) + noise
+        self.env.write_cov(0, np.linalg.norm(var))
         # var=np.diag(np.ones(policy.get_weights_dim())*params.lr_actor**2)+noise
         # Init the rng
         rng = np.random.default_rng()
         # Training Loop
-        with SlowBar('Performing a repetition of CEM', max=params.nb_cycles) as bar:
-            for cycle in range(params.nb_cycles):
+        with SlowBar('Performing a repetition of CEM', max=params.nb_cycles-1) as bar:
+            for cycle in range(1,params.nb_cycles):
                 rewards = np.zeros(params.population)
                 weights = rng.multivariate_normal(centroid, var, params.population)
                 for p in range(params.population):
@@ -188,7 +190,7 @@ class Simu:
                 if (cycle % params.eval_freq) == 0:
                     total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
                     # write and store reward
-                    self.env.write_reward(cycle + 1, total_reward)
+                    self.env.write_reward(cycle, total_reward)
                     self.list_rewards[cycle] = total_reward
 
                 # Save best reward agent (no need for averaging if the policy is deterministic)
@@ -198,7 +200,7 @@ class Simu:
                     self.best_weights_idx = cycle
                 # Save the best policy obtained
                 if (cycle % params.save_freq) == 0:
-                    pw.save(method="CEM", cycle=cycle + 1, score=total_reward)
+                    pw.save(method="CEM", cycle=cycle, score=total_reward)
                 bar.next()
 
         # pw.rename_best(method="CEM",best_cycle=self.best_weights_idx,best_score=self.best_reward)
@@ -223,7 +225,7 @@ class Simu:
         self.list_rewards = np.zeros((int(params.nb_cycles)))
         self.best_reward = -1e38
         self.best_weights_idx = 0
-
+        total_reward = self.best_reward
         self.list_weights.append(policy.get_weights())
 
         if params.start_from_policy:
@@ -235,8 +237,8 @@ class Simu:
         initial_score = self.evaluate_episode(policy, params.deterministic_eval, params)
         pw.save(cycle=0, score=initial_score)
         self.env.write_reward(cycle=0, reward=initial_score)
-        with SlowBar('Performing a repetition of PG', max=params.nb_cycles) as bar:
-            for cycle in range(params.nb_cycles):
+        with SlowBar('Performing a repetition of PG', max=params.nb_cycles-1) as bar:
+            for cycle in range(1,params.nb_cycles):
                 batch = self.make_monte_carlo_batch(params.nb_trajs, params.render, policy)
                 batch.sum_rewards()
                 policy_loss = batch.train_policy_td(policy)
@@ -253,7 +255,7 @@ class Simu:
                 if (cycle % params.eval_freq) == 0:
                     total_reward = self.evaluate_episode(policy, params.deterministic_eval, params)
                     # wrote and store reward
-                    self.env.write_reward(cycle + 1, total_reward)
+                    self.env.write_reward(cycle, total_reward)
                     self.list_rewards[cycle] = total_reward
                     # plot_trajectory(batch2, self.env, cycle+1)
 
@@ -264,7 +266,7 @@ class Simu:
                     self.best_weights_idx = cycle
                 # Save the best policy obtained
                 if (cycle % params.save_freq) == 0:
-                    pw.save(cycle=cycle + 1, score=total_reward)
+                    pw.save(cycle=cycle, score=total_reward)
                 bar.next()
 
         # pw.rename_best(method="PG",best_cycle=self.best_weights_idx,best_score=self.best_reward)
