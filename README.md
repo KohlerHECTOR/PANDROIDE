@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 ## TODO
 
-Compatibility between CEM and Bernoulli Policy
-Fix plot axes and problem of last eval
+Compatibility between CEM and Bernoulli Policy.
+Fix plot axes and problem of last eval.
 Make a "CustomNetwork" class with dim of NN and policy type as arguments. 
 
