@@ -28,18 +28,15 @@ To study the CEM you can use:
 python3 main.py --experiment cem --population 20 --elites_frac 0.2 --sigma 1 --nb_trajs_cem 2
 ```
 
-## Etude sur Pendulum-v0 avec une politique experte simple
+## Simple expert policy on Pendulum-v0
 
-Pour lancer une etude avec une politique experte simple
-
-Exemple de commande :
 
 ```
 python3 simple_eval_expert.py
 ```
 
 
-## Installation des dépendances
+## Dependencies
 
 ```
 pip install -r requirements.txt
@@ -54,4 +51,6 @@ pip install -r requirements.txt
 * Rebuild code for comparison so it runs both algo independently and then build plots. 
 * Rethink compatibility with Vignettes. 
 * Make better wrapper for Beta policy actions. 
+* Make sure everything is in English
+* Translate slides of results in English
 
